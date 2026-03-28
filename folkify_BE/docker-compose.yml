@@ -1,0 +1,109 @@
+# FOLKIFY Backend API - Docker Compose Configuration
+# Requirements: 28.7
+# Updated for Supabase database migration (Requirement 4.1, 4.4)
+
+services:
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: folkify-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - folkify-network
+
+  # API Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: folkify-api
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-15m}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-7d}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      UPLOAD_DIR: /app/uploads
+      MAX_AUDIO_SIZE: ${MAX_AUDIO_SIZE:-52428800}
+      MAX_VIDEO_SIZE: ${MAX_VIDEO_SIZE:-209715200}
+      EMAIL_MODE: ${EMAIL_MODE:-console}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_DIR: /app/logs
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      AUTH_RATE_LIMIT_MAX_REQUESTS: ${AUTH_RATE_LIMIT_MAX_REQUESTS:-5}
+      CACHE_TTL_INSTRUMENTS: ${CACHE_TTL_INSTRUMENTS:-1800}
+      CACHE_TTL_LESSONS: ${CACHE_TTL_LESSONS:-600}
+      CACHE_TTL_SHEETS: ${CACHE_TTL_SHEETS:-1800}
+      CACHE_TTL_ANALYTICS: ${CACHE_TTL_ANALYTICS:-300}
+      PREMIUM_EXPIRATION_CRON: ${PREMIUM_EXPIRATION_CRON:-0 0 * * *}
+      QUEUE_RETRY_ATTEMPTS: ${QUEUE_RETRY_ATTEMPTS:-3}
+      QUEUE_RETRY_DELAY: ${QUEUE_RETRY_DELAY:-2000}
+    ports:
+      - '${PORT:-3000}:3000'
+    volumes:
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+    networks:
+      - folkify-network
+
+  # Worker Service (Background Jobs)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: folkify-worker
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_DIR: /app/logs
+      QUEUE_RETRY_ATTEMPTS: ${QUEUE_RETRY_ATTEMPTS:-3}
+      QUEUE_RETRY_DELAY: ${QUEUE_RETRY_DELAY:-2000}
+    command: ['node', 'dist/worker.js']
+    volumes:
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+    networks:
+      - folkify-network
+
+volumes:
+  redis_data:
+    driver: local
+  uploads_data:
+    driver: local
+  logs_data:
+    driver: local
+
+networks:
+  folkify-network:
+    driver: bridge

@@ -1,0 +1,95 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+!.env.test
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Uploads & User Content
+uploads/
+temp/
+tmp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# Security & Certificates
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# Kiro Internal Files (Development artifacts - not for production)
+.kiro/
+skills/
+
+# Task Tracking & Development Notes (not for production)
+TASK_*.md
+NEED_FIX.txt
+SYSTEM_FLOW_AND_ROLES.md
+
+# Keep essential documentation (override above patterns)
+!folkify_BE/DEPLOYMENT_GUIDE.md
+!folkify_BE/DEPLOYMENT_VERIFICATION.md
+!folkify_BE/TROUBLESHOOTING.md
+!folkify_BE/API_DOCUMENTATION.md
+!folkify_BE/DATABASE_SCHEMA_REFERENCE.md
+!folkify_BE/DATABASE_SETUP.md
+!folkify_BE/QUEUE_SYSTEM.md
+!folkify_BE/DOCKER_QUICK_REFERENCE.md
+!folkify_BE/DEPLOYMENT.md
+!folkify_BE/QUICK_START.md
+!folkify_BE/API_DOCS_README.md
+!folkify_BE/TESTING_QUICK_START.md

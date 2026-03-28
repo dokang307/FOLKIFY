@@ -1,0 +1,378 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============= ENUMS =============
+
+enum AccountType {
+  free
+  basic
+  pro
+}
+
+enum AccountStatus {
+  active
+  banned
+  suspended
+}
+
+enum UserRole {
+  user
+  admin
+}
+
+enum LessonLevel {
+  Beginner
+  Intermediate
+  Advanced
+}
+
+enum LessonStatus {
+  draft
+  published
+}
+
+enum SubscriptionStatus {
+  active
+  expired
+  cancelled
+}
+
+enum TransactionStatus {
+  pending
+  completed
+  failed
+  refunded
+}
+
+enum TransactionType {
+  subscription
+  sheet_purchase
+  credits
+}
+
+enum PaymentMethod {
+  manual
+  credit_card
+  momo
+  zalopay
+}
+
+enum AIGradingStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum PracticeSessionStatus {
+  active
+  completed
+  abandoned
+}
+
+// ============= MODELS =============
+
+model User {
+  id                   String        @id @default(uuid())
+  email                String        @unique
+  password_hash        String
+  full_name            String
+  role                 UserRole      @default(user)
+  account_type         AccountType   @default(free)
+  account_status       AccountStatus @default(active)
+
+  // Premium fields
+  premium_started_at   DateTime?
+  premium_expires_at   DateTime?
+
+  // Ban fields
+  ban_reason           String?
+
+  // Timestamps
+  last_login_at        DateTime?
+  created_at           DateTime      @default(now())
+  updated_at           DateTime      @updatedAt
+  deleted_at           DateTime?
+
+  // Relations
+  user_stats           UserStats?
+  user_progress        UserProgress[]
+  premium_subscriptions PremiumSubscription[]
+  payment_transactions PaymentTransaction[]
+  ai_grading_sessions  AIGradingSession[]
+  practice_sessions    PracticeSession[]
+  user_purchases       UserPurchase[]
+
+  @@index([email])
+  @@index([account_type])
+  @@index([account_status])
+  @@index([premium_expires_at])
+}
+
+model UserStats {
+  id                     String   @id @default(uuid())
+  user_id                String   @unique
+  user                   User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  level                  Int      @default(1)
+  total_xp               Int      @default(0)
+  lessons_completed      Int      @default(0)
+  total_practice_minutes Int      @default(0)
+  current_streak         Int      @default(0)
+  longest_streak         Int      @default(0)
+
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+  @@index([user_id])
+  @@index([level])
+}
+
+model Instrument {
+  id            String   @id @default(uuid())
+  name          String
+  english_name  String
+  region        String
+  category      String
+  emoji         String?
+  color         String?
+  bg_gradient   String?
+  image         String?
+  short_desc    String?
+  description   String?
+  origin        String?
+  material      String?
+  sound_range   String?
+  difficulty    String?
+  popularity    Int      @default(0)
+  facts         Json?    // Array of strings
+
+  order_index   Int      @default(0)
+
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  deleted_at    DateTime?
+
+  // Relations
+  lessons       Lesson[]
+  sheet_music   SheetMusic[]
+  practice_sessions PracticeSession[]
+
+  @@index([order_index])
+}
+
+model Lesson {
+  id                String       @id @default(uuid())
+  instrument_id     String
+  instrument        Instrument   @relation(fields: [instrument_id], references: [id], onDelete: Cascade)
+
+  title             String
+  duration          Int          // minutes
+  level             LessonLevel
+  status            LessonStatus @default(draft)
+  is_premium        Boolean      @default(false)
+
+  youtube_embed_url String?
+  video_thumb       String?
+  description       String?
+  xp                Int          @default(100)
+
+  order_index       Int          @default(0)
+
+  // JSON fields
+  steps             Json?        // Array of step objects
+  tips              Json?        // Array of tip strings
+
+  created_at        DateTime     @default(now())
+  updated_at        DateTime     @updatedAt
+  deleted_at        DateTime?
+
+  // Relations
+  user_progress     UserProgress[]
+  ai_grading_sessions AIGradingSession[]
+  practice_sessions PracticeSession[]
+
+  @@index([instrument_id])
+  @@index([level])
+  @@index([status])
+  @@index([is_premium])
+  @@index([order_index])
+}
+
+model UserProgress {
+  id                  String    @id @default(uuid())
+  user_id             String
+  user                User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  lesson_id           String
+  lesson              Lesson    @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+
+  completed           Boolean   @default(false)
+  progress_percentage Int       @default(0)
+  completed_at        DateTime?
+
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+
+  @@unique([user_id, lesson_id])
+  @@index([user_id])
+  @@index([lesson_id])
+  @@index([completed])
+}
+
+model SheetMusic {
+  id            String   @id @default(uuid())
+  instrument_id String
+  instrument    Instrument @relation(fields: [instrument_id], references: [id], onDelete: Cascade)
+
+  title         String
+  composer      String?
+  genre         String?
+  level         LessonLevel?
+  is_premium    Boolean  @default(false)
+
+  file_path     String
+  preview_url   String?
+  pages         Int      @default(1)
+
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  deleted_at    DateTime?
+
+  // Relations
+  user_purchases UserPurchase[]
+
+  @@index([instrument_id])
+  @@index([is_premium])
+  @@index([level])
+}
+
+model UserPurchase {
+  id             String     @id @default(uuid())
+  user_id        String
+  user           User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  sheet_music_id String
+  sheet_music    SheetMusic @relation(fields: [sheet_music_id], references: [id], onDelete: Cascade)
+
+  purchased_at   DateTime   @default(now())
+
+  @@unique([user_id, sheet_music_id])
+  @@index([user_id])
+}
+
+model PremiumSubscription {
+  id         String             @id @default(uuid())
+  user_id    String
+  user       User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  plan_type  AccountType        // 'basic' or 'pro'
+  status     SubscriptionStatus @default(active)
+
+  started_at DateTime
+  expires_at DateTime
+
+  created_at DateTime           @default(now())
+  updated_at DateTime           @updatedAt
+
+  @@index([user_id])
+  @@index([status])
+  @@index([expires_at])
+}
+
+model PaymentTransaction {
+  id               String            @id @default(uuid())
+  user_id          String
+  user             User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  amount           Decimal           @db.Decimal(10, 2)
+  currency         String            @default("VND")
+  status           TransactionStatus @default(pending)
+  payment_method   PaymentMethod
+  transaction_type TransactionType
+
+  metadata         Json?             // For admin notes, etc.
+
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+
+  @@index([user_id])
+  @@index([status])
+  @@index([created_at])
+}
+
+model AIGradingSession {
+  id          String          @id @default(uuid())
+  user_id     String
+  user        User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  lesson_id   String?
+  lesson      Lesson?         @relation(fields: [lesson_id], references: [id], onDelete: SetNull)
+
+  file_path   String
+  status      AIGradingStatus @default(pending)
+
+  // Results
+  ai_score    Int?
+  criteria_scores Json?        // { rhythm, pitch, technique, expression }
+  ai_feedback String?
+  improvement_suggestions Json? // Array of strings
+
+  error_message String?
+
+  submitted_at DateTime       @default(now())
+  completed_at DateTime?
+
+  @@index([user_id])
+  @@index([status])
+  @@index([submitted_at])
+}
+
+model PracticeSession {
+  id             String               @id @default(uuid())
+  user_id        String
+  user           User                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  lesson_id      String?
+  lesson         Lesson?              @relation(fields: [lesson_id], references: [id], onDelete: SetNull)
+  instrument_id  String?
+  instrument     Instrument?          @relation(fields: [instrument_id], references: [id], onDelete: SetNull)
+
+  status         PracticeSessionStatus @default(active)
+  started_at     DateTime
+  ended_at       DateTime?
+  duration_minutes Int?
+  xp_earned      Int?
+
+  created_at     DateTime             @default(now())
+
+  @@index([user_id])
+  @@index([status])
+  @@index([started_at])
+}
+
+model AdminActivityLog {
+  id            String   @id @default(uuid())
+  admin_id      String
+
+  action        String   // 'manual_upgrade', 'ban_user', 'set_premium', etc.
+  resource_type String   // 'user', 'lesson', 'sheet_music'
+  resource_id   String
+
+  changes       Json?    // What changed
+
+  ip_address    String?
+  user_agent    String?
+
+  created_at    DateTime @default(now())
+
+  @@index([admin_id])
+  @@index([action])
+  @@index([resource_type])
+  @@index([created_at])
+}

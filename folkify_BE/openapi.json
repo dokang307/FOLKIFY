@@ -1,0 +1,1208 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "FOLKIFY Backend API",
+    "version": "1.0.0",
+    "description": "REST API for FOLKIFY - Vietnamese Folk Music Learning Platform. Supports authentication, premium subscriptions (FREE/BASIC/PRO), lessons with access control, AI grading service, and admin dashboard.",
+    "contact": {
+      "name": "FOLKIFY Team",
+      "email": "support@folkify.com"
+    },
+    "license": {
+      "name": "ISC"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.folkify.com",
+      "description": "Production server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Access Token (15 minutes expiration)"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Error message"
+          },
+          "code": {
+            "type": "string",
+            "example": "ERROR_CODE"
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object"
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "total": {
+            "type": "integer",
+            "example": 100
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 5
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "full_name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin"
+            ]
+          },
+          "account_type": {
+            "type": "string",
+            "enum": [
+              "free",
+              "basic",
+              "pro"
+            ]
+          },
+          "account_status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "banned",
+              "suspended"
+            ]
+          },
+          "premium_started_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "premium_expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "last_login_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserStats": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "integer"
+          },
+          "total_xp": {
+            "type": "integer"
+          },
+          "lessons_completed": {
+            "type": "integer"
+          },
+          "total_practice_minutes": {
+            "type": "integer"
+          },
+          "current_streak": {
+            "type": "integer"
+          },
+          "longest_streak": {
+            "type": "integer"
+          }
+        }
+      },
+      "Instrument": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "english_name": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string",
+            "nullable": true
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "bg_gradient": {
+            "type": "string",
+            "nullable": true
+          },
+          "image": {
+            "type": "string",
+            "nullable": true
+          },
+          "short_desc": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "origin": {
+            "type": "string",
+            "nullable": true
+          },
+          "material": {
+            "type": "string",
+            "nullable": true
+          },
+          "sound_range": {
+            "type": "string",
+            "nullable": true
+          },
+          "difficulty": {
+            "type": "string",
+            "nullable": true
+          },
+          "popularity": {
+            "type": "integer"
+          },
+          "facts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "order_index": {
+            "type": "integer"
+          }
+        }
+      },
+      "Lesson": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "instrument_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Duration in minutes"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "Beginner",
+              "Intermediate",
+              "Advanced"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "is_premium": {
+            "type": "boolean"
+          },
+          "youtube_embed_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "video_thumb": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "xp": {
+            "type": "integer"
+          },
+          "order_index": {
+            "type": "integer"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "nullable": true
+          },
+          "tips": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "has_access": {
+            "type": "boolean",
+            "description": "Whether the current user has access to this lesson"
+          },
+          "requires_premium": {
+            "type": "boolean",
+            "description": "Whether this lesson requires premium subscription"
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Whether the current user has completed this lesson"
+          },
+          "progress_percentage": {
+            "type": "integer",
+            "description": "User progress percentage (0-100)"
+          }
+        }
+      },
+      "SheetMusic": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "instrument_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "composer": {
+            "type": "string",
+            "nullable": true
+          },
+          "genre": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "Beginner",
+              "Intermediate",
+              "Advanced"
+            ]
+          },
+          "is_premium": {
+            "type": "boolean"
+          },
+          "file_path": {
+            "type": "string"
+          },
+          "preview_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "has_access": {
+            "type": "boolean",
+            "description": "Whether the current user has access to this sheet"
+          },
+          "requires_premium": {
+            "type": "boolean",
+            "description": "Whether this sheet requires premium subscription"
+          }
+        }
+      },
+      "AIGradingSession": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lesson_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "file_path": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "completed",
+              "failed"
+            ]
+          },
+          "ai_score": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Overall AI score (0-100)"
+          },
+          "criteria_scores": {
+            "type": "object",
+            "properties": {
+              "rhythm": {
+                "type": "integer"
+              },
+              "pitch": {
+                "type": "integer"
+              },
+              "technique": {
+                "type": "integer"
+              },
+              "expression": {
+                "type": "integer"
+              }
+            },
+            "nullable": true
+          },
+          "ai_feedback": {
+            "type": "string",
+            "nullable": true
+          },
+          "improvement_suggestions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "PracticeSession": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lesson_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "instrument_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ended_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "nullable": true
+          },
+          "xp_earned": {
+            "type": "integer",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "completed",
+              "abandoned"
+            ]
+          }
+        }
+      },
+      "PremiumPlan": {
+        "type": "object",
+        "properties": {
+          "plan_type": {
+            "type": "string",
+            "enum": [
+              "basic",
+              "pro"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "price_monthly": {
+            "type": "integer",
+            "description": "Price in VND"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User authentication and authorization endpoints"
+    },
+    {
+      "name": "Instruments",
+      "description": "Vietnamese folk instruments management"
+    },
+    {
+      "name": "Lessons",
+      "description": "Music lessons with access control"
+    },
+    {
+      "name": "Sheet Music",
+      "description": "Sheet music library with premium content"
+    },
+    {
+      "name": "Premium",
+      "description": "Premium subscription plans and status"
+    },
+    {
+      "name": "AI Grading",
+      "description": "AI-powered performance grading (PRO users only)"
+    },
+    {
+      "name": "Practice Sessions",
+      "description": "Practice session tracking and history"
+    },
+    {
+      "name": "Admin - Users",
+      "description": "Admin user management endpoints"
+    },
+    {
+      "name": "Admin - Content",
+      "description": "Admin content management endpoints"
+    },
+    {
+      "name": "Admin - Analytics",
+      "description": "Admin analytics and reports"
+    },
+    {
+      "name": "Health",
+      "description": "System health and metrics"
+    }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password",
+                  "full_name"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6
+                  },
+                  "full_name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "accessToken": {
+                          "type": "string"
+                        },
+                        "refreshToken": {
+                          "type": "string"
+                        },
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "409": {
+            "description": "Email already exists"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Login user",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "accessToken": {
+                          "type": "string"
+                        },
+                        "refreshToken": {
+                          "type": "string"
+                        },
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          },
+          "403": {
+            "description": "Account banned"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "summary": "Refresh access token",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "refreshToken"
+                ],
+                "properties": {
+                  "refreshToken": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "accessToken": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired refresh token"
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "summary": "Get current user profile",
+        "tags": [
+          "Authentication"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        },
+                        "stats": {
+                          "$ref": "#/components/schemas/UserStats"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/instruments": {
+      "get": {
+        "summary": "Get all instruments",
+        "tags": [
+          "Instruments"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of instruments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Instrument"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/instruments/{id}": {
+      "get": {
+        "summary": "Get instrument by ID",
+        "tags": [
+          "Instruments"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Instrument details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Instrument"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Instrument not found"
+          }
+        }
+      }
+    },
+    "/api/lessons/search": {
+      "get": {
+        "summary": "Search lessons",
+        "tags": [
+          "Lessons"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search term"
+          },
+          {
+            "in": "query",
+            "name": "level",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Beginner",
+                "Intermediate",
+                "Advanced"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "instrument_id",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Lesson"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lessons/{id}": {
+      "get": {
+        "summary": "Get lesson by ID with access control",
+        "tags": [
+          "Lessons"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lesson details with access information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Lesson"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Access denied - Premium required"
+          },
+          "404": {
+            "description": "Lesson not found"
+          }
+        }
+      }
+    },
+    "/api/lessons/{id}/complete": {
+      "post": {
+        "summary": "Mark lesson as completed",
+        "tags": [
+          "Lessons"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lesson completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "xp_earned": {
+                          "type": "integer"
+                        },
+                        "new_total_xp": {
+                          "type": "integer"
+                        },
+                        "new_level": {
+                          "type": "integer"
+                        },
+                        "level_up": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Access denied"
+          },
+          "404": {
+            "description": "Lesson not found"
+          }
+        }
+      }
+    },
+    "/api/docs": {
+      "get": {
+        "summary": "Swagger UI documentation",
+        "description": "Interactive API documentation",
+        "tags": [
+          "Documentation"
+        ],
+        "responses": {
+          "200": {
+            "description": "Swagger UI HTML page"
+          }
+        }
+      }
+    },
+    "/api/sheets": {
+      "get": {
+        "summary": "Get all sheet music",
+        "tags": [
+          "Sheet Music"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "instrument",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "genre",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "level",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Beginner",
+                "Intermediate",
+                "Advanced"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_premium",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of sheet music"
+          }
+        }
+      }
+    },
+    "/api/sheets/search": {
+      "get": {
+        "summary": "Search sheet music",
+        "tags": [
+          "Sheet Music"
+        ]
+      }
+    },
+    "/api/sheets/{id}": {
+      "get": {
+        "summary": "Get sheet music by ID",
+        "tags": [
+          "Sheet Music"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/sheets/{id}/download": {
+      "get": {
+        "summary": "Download sheet music PDF",
+        "tags": [
+          "Sheet Music"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,156 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: folkify_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: folkify_BE/package-lock.json
+
+      - name: Install dependencies
+        working-directory: folkify_BE
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: folkify_BE
+        run: npx prisma generate
+
+      - name: Run database migrations
+        working-directory: folkify_BE
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/folkify_test
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/folkify_test
+        run: npx prisma migrate deploy
+
+      - name: Run tests
+        working-directory: folkify_BE
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/folkify_test
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/folkify_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: ''
+          JWT_SECRET: test-secret-key-minimum-32-characters-long
+          JWT_ACCESS_EXPIRATION: 15m
+          JWT_REFRESH_EXPIRATION: 7d
+          FRONTEND_URL: http://localhost:3000
+          MAX_AUDIO_SIZE: 52428800
+          MAX_VIDEO_SIZE: 209715200
+          EMAIL_MODE: console
+          LOG_LEVEL: error
+        run: npm test
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        if: always()
+        with:
+          directory: folkify_BE/coverage
+          flags: unittests
+          name: codecov-umbrella
+
+  lint:
+    name: Run Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: folkify_BE/package-lock.json
+
+      - name: Install dependencies
+        working-directory: folkify_BE
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: folkify_BE
+        run: npm run lint
+
+  build:
+    name: TypeScript Compilation Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: folkify_BE/package-lock.json
+
+      - name: Install dependencies
+        working-directory: folkify_BE
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: folkify_BE
+        run: npx prisma generate
+
+      - name: Build TypeScript
+        working-directory: folkify_BE
+        run: npm run build
+
+  deployment-gate:
+    name: Deployment Gate
+    runs-on: ubuntu-latest
+    needs: [test, lint, build]
+    if: failure()
+
+    steps:
+      - name: Prevent Deployment on Failure
+        run: |
+          echo "::error::CI pipeline failed. Deployment blocked."
+          exit 1

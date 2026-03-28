@@ -1,0 +1,16 @@
+import { PrismaClient } from '@prisma/client';
+import { mockDeep, mockReset, DeepMockProxy } from 'jest-mock-extended';
+
+// Create a deep mock of PrismaClient that persists across imports
+const prismaMock = mockDeep<PrismaClient>() as unknown as DeepMockProxy<PrismaClient>;
+
+// Reset the mock before each test
+beforeEach(() => {
+  mockReset(prismaMock);
+});
+
+// Export the mock
+export { prismaMock };
+
+// Export as default for default imports
+export default prismaMock;
