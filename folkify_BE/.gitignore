@@ -48,4 +48,5 @@ coverage/
 *.pfx
 
 # Prisma
-prisma/migrations/
+# Note: Migrations should be committed to version control for deployment
+
