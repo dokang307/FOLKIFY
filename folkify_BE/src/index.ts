@@ -40,8 +40,12 @@ async function startServer(): Promise<void> {
     logger.info('✓ Database connected successfully');
 
     // 2. Connect to Redis
-    await redisClient.ping();
-    logger.info('✓ Redis connected successfully');
+    try {
+      await redisClient.ping();
+      logger.info('✓ Redis connected successfully');
+    } catch (error) {
+      logger.warn('⚠ Redis connection failed, continuing without cache:', error);
+    }
 
     // 3. Initialize BullMQ queues (queues are initialized in config/queues.ts)
     logger.info('✓ BullMQ queues initialized');
@@ -51,8 +55,12 @@ async function startServer(): Promise<void> {
     logger.info('✓ Queue workers started successfully');
 
     // 5. Warm cache on startup
-    await warmCache();
-    logger.info('✓ Cache warmed successfully');
+    try {
+      await warmCache();
+      logger.info('✓ Cache warmed successfully');
+    } catch (error) {
+      logger.warn('⚠ Cache warming failed, continuing:', error);
+    }
 
     // 6. Start performance monitoring
     metricsService.startMonitoring();
@@ -156,4 +164,4 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Start the server
 startServer();
-"" 
+('');
