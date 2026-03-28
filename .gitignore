@@ -1,8 +1,10 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Allow package-lock.json in folkify_BE for Railway deployment
+!folkify_BE/package-lock.json
 
 # Build output
 dist/
