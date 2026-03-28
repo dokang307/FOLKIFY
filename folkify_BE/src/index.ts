@@ -39,27 +39,42 @@ async function startServer(): Promise<void> {
     await connectDatabase();
     logger.info('✓ Database connected successfully');
 
-    // 2. Connect to Redis
+    // 2. Connect to Redis (optional - service can run without it)
     try {
-      await redisClient.ping();
-      logger.info('✓ Redis connected successfully');
+      // Only try to connect if Redis is configured
+      if (process.env.REDIS_URL || process.env.REDIS_HOST) {
+        await redisClient.connect();
+        await redisClient.ping();
+        logger.info('✓ Redis connected successfully');
+      } else {
+        logger.warn('⚠ Redis not configured, skipping connection');
+        logger.warn('  Set REDIS_URL or REDIS_HOST to enable caching and background jobs');
+      }
     } catch (error) {
-      logger.warn('⚠ Redis connection failed, continuing without cache:', error);
+      logger.warn('⚠ Redis connection failed, continuing without cache');
+      logger.warn('  This is normal if Redis is not configured in your environment');
+      logger.warn('  The service will run with reduced performance (no caching)');
     }
 
     // 3. Initialize BullMQ queues (queues are initialized in config/queues.ts)
     logger.info('✓ BullMQ queues initialized');
 
-    // 4. Start queue workers
-    startWorkers();
-    logger.info('✓ Queue workers started successfully');
+    // 4. Start queue workers (optional - service can run without them)
+    try {
+      startWorkers();
+      logger.info('✓ Queue workers started successfully');
+    } catch (error) {
+      logger.warn('⚠ Queue workers failed to start, continuing without background jobs');
+      logger.warn('  This is normal if Redis is not configured in your environment');
+      logger.warn('  Background jobs (AI grading, emails) will not be processed');
+    }
 
-    // 5. Warm cache on startup
+    // 5. Warm cache on startup (optional - skip if Redis unavailable)
     try {
       await warmCache();
       logger.info('✓ Cache warmed successfully');
     } catch (error) {
-      logger.warn('⚠ Cache warming failed, continuing:', error);
+      logger.warn('⚠ Cache warming failed, continuing without cache');
     }
 
     // 6. Start performance monitoring

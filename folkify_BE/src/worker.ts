@@ -27,9 +27,24 @@ async function startWorkers(): Promise<void> {
     await connectDatabase();
     logger.info('✓ Database connected successfully');
 
-    // 2. Connect to Redis
-    await redisClient.ping();
-    logger.info('✓ Redis connected successfully');
+    // 2. Connect to Redis (required for workers)
+    if (!process.env.REDIS_URL && !process.env.REDIS_HOST) {
+      logger.error('❌ Redis is not configured (REDIS_URL or REDIS_HOST not set)');
+      logger.error('Workers require Redis to process background jobs');
+      logger.error('Please provision Redis service and set environment variables');
+      process.exit(1);
+    }
+
+    try {
+      await redisClient.connect();
+      await redisClient.ping();
+      logger.info('✓ Redis connected successfully');
+    } catch (error) {
+      logger.error('❌ Failed to connect to Redis:', error);
+      logger.error('Workers cannot start without Redis connection');
+      logger.error('Please verify Redis service is running and environment variables are correct');
+      process.exit(1);
+    }
 
     // 3. Start AI grading worker
     aiGradingWorker = createAIGradingWorker();

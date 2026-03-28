@@ -40,6 +40,12 @@ async function checkDatabaseHealth(): Promise<'connected' | 'disconnected'> {
  */
 async function checkRedisHealth(): Promise<'connected' | 'disconnected'> {
   try {
+    // Check if Redis is configured
+    if (!process.env.REDIS_HOST && !process.env.REDIS_URL) {
+      logger.debug('Redis not configured (REDIS_HOST or REDIS_URL not set)');
+      return 'disconnected';
+    }
+
     await redisClient.ping();
     return 'connected';
   } catch (error) {
@@ -53,6 +59,12 @@ async function checkRedisHealth(): Promise<'connected' | 'disconnected'> {
  */
 async function checkQueueHealth(): Promise<'running' | 'stopped'> {
   try {
+    // Check if Redis is configured (required for queues)
+    if (!process.env.REDIS_HOST && !process.env.REDIS_URL) {
+      logger.debug('Queues not available (Redis not configured)');
+      return 'stopped';
+    }
+
     // Check if queues are accessible
     const [_aiGradingCount, _emailCount] = await Promise.all([
       aiGradingQueue.count(),
@@ -124,6 +136,11 @@ function getUptime(): string {
 
 /**
  * Get overall health status
+ *
+ * Health check strategy:
+ * - Returns "healthy" if database is connected (critical service)
+ * - Redis and queue status are informational only
+ * - This allows the service to start even if Redis is not yet configured
  */
 export async function getHealthStatus(): Promise<HealthStatus> {
   const [database, redis, queue, diskSpace] = await Promise.all([
@@ -135,10 +152,9 @@ export async function getHealthStatus(): Promise<HealthStatus> {
 
   const uptime = getUptime();
 
-  const status =
-    database === 'connected' && redis === 'connected' && queue === 'running'
-      ? 'healthy'
-      : 'unhealthy';
+  // Service is healthy if database is connected (critical service)
+  // Redis and queues are optional services that can be degraded
+  const status = database === 'connected' ? 'healthy' : 'unhealthy';
 
   return {
     status,

@@ -47,8 +47,8 @@ describe('Health Service', () => {
       expect(result.queue).toBe('running');
     });
 
-    it('should return unhealthy status when Redis is disconnected', async () => {
-      // Mock Redis as unhealthy
+    it('should return healthy status even when Redis is disconnected', async () => {
+      // Mock Redis as unhealthy (non-critical service)
       (databaseHealthCheck as jest.Mock).mockResolvedValue(true);
       (redisClient.ping as jest.Mock).mockRejectedValue(new Error('Redis error'));
       (aiGradingQueue.count as jest.Mock).mockResolvedValue(0);
@@ -56,21 +56,23 @@ describe('Health Service', () => {
 
       const result = await getHealthStatus();
 
-      expect(result.status).toBe('unhealthy');
+      // Service is still healthy if only Redis is down (database is critical)
+      expect(result.status).toBe('healthy');
       expect(result.database).toBe('connected');
       expect(result.redis).toBe('disconnected');
       expect(result.queue).toBe('running');
     });
 
-    it('should return unhealthy status when queue is stopped', async () => {
-      // Mock queue as unhealthy
+    it('should return healthy status even when queue is stopped', async () => {
+      // Mock queue as unhealthy (non-critical service)
       (databaseHealthCheck as jest.Mock).mockResolvedValue(true);
       (redisClient.ping as jest.Mock).mockResolvedValue('PONG');
       (aiGradingQueue.count as jest.Mock).mockRejectedValue(new Error('Queue error'));
 
       const result = await getHealthStatus();
 
-      expect(result.status).toBe('unhealthy');
+      // Service is still healthy if only queue is down (database is critical)
+      expect(result.status).toBe('healthy');
       expect(result.database).toBe('connected');
       expect(result.redis).toBe('connected');
       expect(result.queue).toBe('stopped');
