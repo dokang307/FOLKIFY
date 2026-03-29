@@ -30,8 +30,8 @@ export async function registerUser(input: {
       password: input.password,
     });
 
-    // Save auth data
-    authService.saveAuthData(response.token, response.user);
+    // Save auth data (use accessToken from backend)
+    authService.saveAuthData(response.accessToken, response.user);
 
     return { ok: true };
   } catch (error: any) {
@@ -55,13 +55,13 @@ export async function authenticateUser(input: {
       password: input.password,
     });
 
-    // Save auth data
-    authService.saveAuthData(response.token, response.user);
+    // Save auth data (use accessToken from backend)
+    authService.saveAuthData(response.accessToken, response.user);
 
     return {
       ok: true,
       user: {
-        name: response.user.name,
+        name: response.user.fullName, // Backend uses fullName
         email: response.user.email,
       },
     };
@@ -91,7 +91,7 @@ export function getCurrentUser(): StoredUser | null {
   const savedUser = authService.getSavedUser();
   if (savedUser) {
     return {
-      name: savedUser.name,
+      name: savedUser.fullName, // Backend uses fullName
       email: savedUser.email,
     };
   }

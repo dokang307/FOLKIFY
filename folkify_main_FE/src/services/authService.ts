@@ -7,19 +7,20 @@ import { api } from "../config/api";
 
 export interface User {
   id: string;
-  name: string;
   email: string;
+  fullName: string; // Backend uses fullName
   role: string;
   createdAt?: string;
 }
 
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
   user: User;
 }
 
 export interface RegisterInput {
-  name: string;
+  name: string; // Will be mapped to fullName for API
   email: string;
   password: string;
 }
@@ -34,24 +35,30 @@ export const authService = {
    * Register a new user
    */
   async register(input: RegisterInput): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>(
+    const response = await api.post<{ success: boolean; data: AuthResponse }>(
       "/api/auth/register",
-      input,
+      {
+        fullName: input.name, // Map 'name' to 'fullName' for backend
+        email: input.email,
+        password: input.password,
+      },
       true, // Skip auth for registration
     );
-    return response;
+    // Backend returns { success: true, data: { accessToken, refreshToken, user } }
+    return response.data;
   },
 
   /**
    * Login user
    */
   async login(input: LoginInput): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>(
+    const response = await api.post<{ success: boolean; data: AuthResponse }>(
       "/api/auth/login",
       input,
       true, // Skip auth for login
     );
-    return response;
+    // Backend returns { success: true, data: { accessToken, refreshToken, user } }
+    return response.data;
   },
 
   /**
