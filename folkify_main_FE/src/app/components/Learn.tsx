@@ -1,9 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Search, ChevronRight, Star, Lock, Play, Music2, Clock3 } from "lucide-react";
+import {
+  Search,
+  ChevronRight,
+  Star,
+  Lock,
+  Play,
+  Music2,
+  Clock3,
+} from "lucide-react";
 import { instruments, categories } from "../data/instruments";
-import { getCompletedLessonsCount, isLessonCompleted } from "../data/lessonProgress";
+import {
+  getCompletedLessonsCount,
+  isLessonCompleted,
+} from "../data/lessonProgress";
 import folkifyLogo from "../../assets/logofolkify.png";
+import { useInstruments } from "../../hooks/useInstruments";
+import { Loading } from "../../components/Loading";
+import { ErrorMessage } from "../../components/ErrorMessage";
 
 const levelTabs = ["Tất cả", "Beginner", "Intermediate", "Advanced"];
 const clipStatusLabel = {
@@ -17,14 +31,25 @@ export function Learn() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeLevel, setActiveLevel] = useState("Tất cả");
   const [search, setSearch] = useState("");
+  const { instruments: apiInstruments, loading, error } = useInstruments();
 
-  const filtered = instruments.filter((inst) => {
-    const matchCat = activeCategory === "all" || inst.category === activeCategory;
+  // Use API data if available, otherwise fallback to static data
+  const instrumentsData =
+    apiInstruments.length > 0 ? apiInstruments : instruments;
+
+  const filtered = instrumentsData.filter((inst) => {
+    const matchCat =
+      activeCategory === "all" || inst.category === activeCategory;
     const matchSearch =
       inst.name.toLowerCase().includes(search.toLowerCase()) ||
-      inst.englishName.toLowerCase().includes(search.toLowerCase());
+      (inst.englishName &&
+        inst.englishName.toLowerCase().includes(search.toLowerCase()));
     return matchCat && matchSearch;
   });
+
+  if (loading) {
+    return <Loading message="Đang tải danh sách nhạc cụ..." />;
+  }
 
   return (
     <div className="flex flex-col min-h-full bg-[#F7FAF8]">
@@ -45,9 +70,16 @@ export function Learn() {
 
           <div className="flex items-center gap-2">
             <Music2 size={20} className="text-[#95D5B2]" />
-            <h1 className="text-white" style={{ fontWeight: 700, fontSize: 20 }}>Học nhạc cụ</h1>
+            <h1
+              className="text-white"
+              style={{ fontWeight: 700, fontSize: 20 }}
+            >
+              Học nhạc cụ
+            </h1>
           </div>
-          <p className="text-[#95D5B2] text-sm mt-1">{instruments.length} nhạc cụ · Video + Lộ trình</p>
+          <p className="text-[#95D5B2] text-sm mt-1">
+            {instrumentsData.length} nhạc cụ · Video + Lộ trình
+          </p>
 
           {/* Search */}
           <div className="mt-4 flex items-center gap-3 bg-white/10 rounded-2xl px-4 py-3">
@@ -104,6 +136,11 @@ export function Learn() {
 
       {/* Instrument Cards */}
       <div className="flex-1 px-4 py-4 space-y-4">
+        {error && (
+          <div className="mb-4">
+            <ErrorMessage message={error} />
+          </div>
+        )}
         {filtered.length === 0 && (
           <div className="text-center py-16">
             <Music2 size={44} className="text-gray-300 mx-auto" />
@@ -114,41 +151,72 @@ export function Learn() {
           const completedCount = getCompletedLessonsCount(inst);
           const pct = Math.round((completedCount / inst.lessons.length) * 100);
 
-          const beginnerCount = inst.lessons.filter((l) => l.level === "Beginner").length;
-          const intermediateCount = inst.lessons.filter((l) => l.level === "Intermediate").length;
-          const advancedCount = inst.lessons.filter((l) => l.level === "Advanced").length;
+          const beginnerCount = inst.lessons.filter(
+            (l) => l.level === "Beginner",
+          ).length;
+          const intermediateCount = inst.lessons.filter(
+            (l) => l.level === "Intermediate",
+          ).length;
+          const advancedCount = inst.lessons.filter(
+            (l) => l.level === "Advanced",
+          ).length;
 
-          const visibleLessons = activeLevel === "Tất cả"
-            ? inst.lessons
-            : inst.lessons.filter((l) => l.level === activeLevel);
+          const visibleLessons =
+            activeLevel === "Tất cả"
+              ? inst.lessons
+              : inst.lessons.filter((l) => l.level === activeLevel);
 
-          if (activeLevel !== "Tất cả" && visibleLessons.length === 0) return null;
+          if (activeLevel !== "Tất cả" && visibleLessons.length === 0)
+            return null;
 
           return (
-            <div key={inst.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+            <div
+              key={inst.id}
+              className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100"
+            >
               {/* Instrument Header */}
               <div
                 className={`relative h-32 cursor-pointer active:opacity-95 transition-opacity`}
                 onClick={() => navigate(`/learn/${inst.id}`)}
               >
-                <img src={inst.image} alt={inst.name} className="w-full h-full object-cover object-[50%_22%]" />
-                <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent`} />
-                <div className={`absolute inset-0 bg-gradient-to-br ${inst.bgGradient} opacity-30`} />
+                <img
+                  src={inst.image}
+                  alt={inst.name}
+                  className="w-full h-full object-cover object-[50%_22%]"
+                />
+                <div
+                  className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent`}
+                />
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${inst.bgGradient} opacity-30`}
+                />
                 <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
                   <div>
                     <div className="flex items-center gap-1.5 mb-1">
                       <Music2 size={18} className="text-white" />
-                      <h3 className="text-white" style={{ fontWeight: 700, fontSize: 16 }}>{inst.name}</h3>
+                      <h3
+                        className="text-white"
+                        style={{ fontWeight: 700, fontSize: 16 }}
+                      >
+                        {inst.name}
+                      </h3>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
                         {inst.category}
                       </span>
-                      <span className="text-gray-300 text-[10px]">{inst.lessons.length} video</span>
+                      <span className="text-gray-300 text-[10px]">
+                        {inst.lessons.length} video
+                      </span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-white text-xs" style={{ fontWeight: 600 }}>{pct}%</p>
+                    <p
+                      className="text-white text-xs"
+                      style={{ fontWeight: 600 }}
+                    >
+                      {pct}%
+                    </p>
                     <p className="text-gray-300 text-[10px]">hoàn thành</p>
                   </div>
                 </div>
@@ -186,7 +254,9 @@ export function Learn() {
                     <Star
                       key={i}
                       size={10}
-                      className={i < inst.difficulty ? "text-amber-400" : "text-gray-200"}
+                      className={
+                        i < inst.difficulty ? "text-amber-400" : "text-gray-200"
+                      }
                       fill={i < inst.difficulty ? "#FBBF24" : "#E5E7EB"}
                     />
                   ))}
@@ -195,7 +265,10 @@ export function Learn() {
 
               {/* Lesson list preview */}
               <div className="px-4 pb-4 space-y-2">
-                {(activeLevel === "Tất cả" ? inst.lessons.slice(0, 3) : visibleLessons.slice(0, 3)).map((lesson, idx) => {
+                {(activeLevel === "Tất cả"
+                  ? inst.lessons.slice(0, 3)
+                  : visibleLessons.slice(0, 3)
+                ).map((lesson, idx) => {
                   const allLessons = inst.lessons;
                   const globalIdx = allLessons.indexOf(lesson);
                   const completedSoFar = getCompletedLessonsCount(inst);
@@ -207,9 +280,14 @@ export function Learn() {
                   return (
                     <div
                       key={lesson.id}
-                      onClick={() => !isLocked && navigate(`/learn/${inst.id}/lesson/${lesson.id}`)}
+                      onClick={() =>
+                        !isLocked &&
+                        navigate(`/learn/${inst.id}/lesson/${lesson.id}`)
+                      }
                       className={`flex items-center gap-3 rounded-xl p-2.5 transition-all ${
-                        isLocked ? "opacity-40" : "cursor-pointer hover:bg-gray-50 active:bg-gray-50"
+                        isLocked
+                          ? "opacity-40"
+                          : "cursor-pointer hover:bg-gray-50 active:bg-gray-50"
                       }`}
                     >
                       {/* Thumb */}
@@ -234,7 +312,11 @@ export function Learn() {
                               <span className="text-white text-[10px]">✓</span>
                             </div>
                           ) : (
-                            <Play size={10} fill="white" className="text-white ml-0.5" />
+                            <Play
+                              size={10}
+                              fill="white"
+                              className="text-white ml-0.5"
+                            />
                           )}
                         </div>
                         {!isLocked && !isClipReady && (
@@ -246,22 +328,40 @@ export function Learn() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-gray-700 text-xs truncate" style={{ fontWeight: lessonCompleted ? 400 : 600 }}>
+                        <p
+                          className="text-gray-700 text-xs truncate"
+                          style={{ fontWeight: lessonCompleted ? 400 : 600 }}
+                        >
                           {lesson.title}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${
-                            lesson.level === "Beginner" ? "bg-green-50 text-green-600" :
-                            lesson.level === "Intermediate" ? "bg-yellow-50 text-yellow-600" :
-                            "bg-red-50 text-red-600"
-                          }`}>{lesson.level}</span>
-                          <span className="text-gray-400 text-[10px]">{lesson.duration}</span>
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                              lesson.level === "Beginner"
+                                ? "bg-green-50 text-green-600"
+                                : lesson.level === "Intermediate"
+                                  ? "bg-yellow-50 text-yellow-600"
+                                  : "bg-red-50 text-red-600"
+                            }`}
+                          >
+                            {lesson.level}
+                          </span>
+                          <span className="text-gray-400 text-[10px]">
+                            {lesson.duration}
+                          </span>
                         </div>
                         {!isClipReady && (
-                          <p className="text-[10px] text-amber-600 mt-0.5">{clipStatusLabel[clipStatus]}</p>
+                          <p className="text-[10px] text-amber-600 mt-0.5">
+                            {clipStatusLabel[clipStatus]}
+                          </p>
                         )}
                       </div>
-                      <span className="text-[#2D6A4F] text-[10px] flex-shrink-0" style={{ fontWeight: 600 }}>+{lesson.xp} XP</span>
+                      <span
+                        className="text-[#2D6A4F] text-[10px] flex-shrink-0"
+                        style={{ fontWeight: 600 }}
+                      >
+                        +{lesson.xp} XP
+                      </span>
                     </div>
                   );
                 })}
@@ -272,7 +372,8 @@ export function Learn() {
                     className="w-full text-[#2D6A4F] text-xs py-2 flex items-center justify-center gap-1"
                     style={{ fontWeight: 600 }}
                   >
-                    Xem tất cả {inst.lessons.length} bài <ChevronRight size={14} />
+                    Xem tất cả {inst.lessons.length} bài{" "}
+                    <ChevronRight size={14} />
                   </button>
                 )}
               </div>
@@ -282,9 +383,12 @@ export function Learn() {
 
         {/* Info banner */}
         <div className="bg-[#1A3A2B] rounded-2xl p-4">
-          <p className="text-[#95D5B2] text-xs" style={{ fontWeight: 700 }}>Folkify — Học nhạc dân tộc</p>
+          <p className="text-[#95D5B2] text-xs" style={{ fontWeight: 700 }}>
+            Folkify — Học nhạc dân tộc
+          </p>
           <p className="text-[#52B788] text-xs mt-1 leading-relaxed">
-            Lộ trình học từ Beginner → Advanced, kết hợp video bài giảng và sheet nhạc tương ứng.
+            Lộ trình học từ Beginner → Advanced, kết hợp video bài giảng và
+            sheet nhạc tương ứng.
           </p>
         </div>
       </div>

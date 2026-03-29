@@ -16,7 +16,7 @@ export function Login() {
   const redirectTo =
     state?.from && state.from.startsWith("/") ? state.from : "/";
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!email.trim() || !password.trim()) {
@@ -24,15 +24,21 @@ export function Login() {
       return;
     }
 
-    const loginResult = authenticateUser({ email, password });
-    if (!loginResult.ok) {
-      setError(loginResult.error);
-      return;
-    }
+    try {
+      const loginResult = await authenticateUser({ email, password });
+      if (!loginResult.ok) {
+        setError(loginResult.error);
+        return;
+      }
 
-    setError("");
-    login(loginResult.user.email);
-    navigate(redirectTo, { replace: true });
+      setError("");
+      login(loginResult.user.email);
+
+      // Redirect to home page after successful login
+      window.location.href = redirectTo;
+    } catch (err: any) {
+      setError(err.message || "Đăng nhập thất bại");
+    }
   }
 
   return (
@@ -86,7 +92,9 @@ export function Login() {
             </label>
 
             <label className="block">
-              <span className="text-xs text-[#D8F3DC] mb-1 block">Mật khẩu</span>
+              <span className="text-xs text-[#D8F3DC] mb-1 block">
+                Mật khẩu
+              </span>
               <div className="flex items-center gap-2 rounded-xl border border-white/30 bg-white/85 px-3 py-3">
                 <Lock size={16} className="text-gray-500" />
                 <input

@@ -22,6 +22,9 @@ import danNhiImg from "../../assets/dannhi.jpg";
 import tyBaImg from "../../assets/tyba.jpg";
 import folkifyLogo from "../../assets/logofolkify.png";
 import { getCurrentUser } from "../auth";
+import { useUserProgress } from "../../hooks/useUserProgress";
+import { Loading } from "../../components/Loading";
+import { ErrorMessage } from "../../components/ErrorMessage";
 
 const instrumentPhotos: Record<string, string> = {
   "dan-tranh": danTranhImg,
@@ -127,11 +130,14 @@ export function Home() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState(mockNotifications);
   const userName = getCurrentUser()?.name ?? "Học viên";
+  const { progress, stats, loading, error } = useUserProgress();
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((item) => ({ ...item, unread: false })));
+    setNotifications((prev) =>
+      prev.map((item) => ({ ...item, unread: false })),
+    );
   };
 
   const handleNotificationClick = (notification: NotificationItem) => {
@@ -166,20 +172,29 @@ export function Home() {
     navigate("/learn");
   };
 
-  const totalLessons = instruments.reduce(
-    (acc, i) => acc + i.lessons.length,
-    0,
-  );
-  const completedLessons = instruments.reduce(
-    (acc, i) => acc + i.lessons.filter((l) => l.completed).length,
-    0,
-  );
-  const progressPercent = Math.round((completedLessons / totalLessons) * 100);
-  const totalXp = instruments.reduce(
-    (acc, i) =>
-      acc + i.lessons.filter((l) => l.completed).reduce((s, l) => s + l.xp, 0),
-    0,
-  );
+  // Use API data if available, otherwise fallback to static data
+  const totalLessons =
+    stats?.totalLessons ??
+    instruments.reduce((acc, i) => acc + i.lessons.length, 0);
+  const completedLessons =
+    stats?.completedLessons ??
+    instruments.reduce(
+      (acc, i) => acc + i.lessons.filter((l) => l.completed).length,
+      0,
+    );
+  const progressPercent =
+    stats?.progressPercent ??
+    Math.round((completedLessons / totalLessons) * 100);
+  const totalXp =
+    stats?.totalXp ??
+    instruments.reduce(
+      (acc, i) =>
+        acc +
+        i.lessons.filter((l) => l.completed).reduce((s, l) => s + l.xp, 0),
+      0,
+    );
+  const currentStreak = stats?.currentStreak ?? 7;
+  const userLevel = stats?.level ?? 3;
 
   const notificationOverlay =
     showNotifications &&
@@ -237,7 +252,9 @@ export function Home() {
                                 ? "text-[#1A3A2B]"
                                 : "text-gray-600"
                             }`}
-                            style={{ fontWeight: notification.unread ? 700 : 600 }}
+                            style={{
+                              fontWeight: notification.unread ? 700 : 600,
+                            }}
                           >
                             {notification.title}
                           </p>
@@ -260,8 +277,21 @@ export function Home() {
       document.body,
     );
 
+  // Show loading state
+  if (loading) {
+    return <Loading message="Đang tải dữ liệu..." />;
+  }
+
+  // Show error state (but continue with fallback data)
+  const showError = error && !stats;
+
   return (
     <div className="flex flex-col min-h-full">
+      {showError && (
+        <div className="px-4 pt-4">
+          <ErrorMessage message={error} />
+        </div>
+      )}
       {/* Header */}
       <div className="header-green-full bg-[#1A3A2B] px-5 pt-12 pb-8 relative overflow-hidden">
         <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/5" />
@@ -308,7 +338,9 @@ export function Home() {
             <h1 className="text-white text-xl" style={{ fontWeight: 700 }}>
               {userName}
             </h1>
-            <p className="text-[#52B788] text-sm mt-0.5">Học viên · Cấp độ 3</p>
+            <p className="text-[#52B788] text-sm mt-0.5">
+              Học viên · Cấp độ {userLevel}
+            </p>
           </div>
 
           {/* Progress Card */}
@@ -328,7 +360,7 @@ export function Home() {
                       className="text-sm text-white"
                       style={{ fontWeight: 700 }}
                     >
-                      7
+                      {currentStreak}
                     </span>
                   </div>
                   <p className="text-[#52B788] text-[10px]">streak</p>

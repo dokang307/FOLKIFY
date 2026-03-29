@@ -14,10 +14,15 @@ export function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !password.trim() ||
+      !confirmPassword.trim()
+    ) {
       setError("Vui lòng nhập đầy đủ thông tin.");
       return;
     }
@@ -32,15 +37,21 @@ export function Register() {
       return;
     }
 
-    const registerResult = registerUser({ name, email, password });
-    if (!registerResult.ok) {
-      setError(registerResult.error);
-      return;
-    }
+    try {
+      const registerResult = await registerUser({ name, email, password });
+      if (!registerResult.ok) {
+        setError(registerResult.error);
+        return;
+      }
 
-    setError("");
-    login(email);
-    navigate("/", { replace: true });
+      setError("");
+      login(email);
+
+      // Redirect to home page after successful registration
+      window.location.href = "/";
+    } catch (err: any) {
+      setError(err.message || "Đăng ký thất bại");
+    }
   }
 
   return (
@@ -66,7 +77,10 @@ export function Register() {
               alt="Folkify"
               className="w-14 h-14 rounded-2xl shadow-md ring-2 ring-white/40"
             />
-            <h1 className="mt-4 text-2xl text-white" style={{ fontWeight: 700 }}>
+            <h1
+              className="mt-4 text-2xl text-white"
+              style={{ fontWeight: 700 }}
+            >
               Tạo tài khoản
             </h1>
             <p className="mt-1 text-sm text-[#D8F3DC] text-center">
@@ -76,7 +90,9 @@ export function Register() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block">
-              <span className="text-xs text-[#D8F3DC] mb-1 block">Họ và tên</span>
+              <span className="text-xs text-[#D8F3DC] mb-1 block">
+                Họ và tên
+              </span>
               <div className="flex items-center gap-2 rounded-xl border border-white/30 bg-white/85 px-3 py-3">
                 <User size={16} className="text-gray-500" />
                 <input
@@ -104,7 +120,9 @@ export function Register() {
             </label>
 
             <label className="block">
-              <span className="text-xs text-[#D8F3DC] mb-1 block">Mật khẩu</span>
+              <span className="text-xs text-[#D8F3DC] mb-1 block">
+                Mật khẩu
+              </span>
               <div className="flex items-center gap-2 rounded-xl border border-white/30 bg-white/85 px-3 py-3">
                 <Lock size={16} className="text-gray-500" />
                 <input
@@ -126,7 +144,9 @@ export function Register() {
             </label>
 
             <label className="block">
-              <span className="text-xs text-[#D8F3DC] mb-1 block">Nhập lại mật khẩu</span>
+              <span className="text-xs text-[#D8F3DC] mb-1 block">
+                Nhập lại mật khẩu
+              </span>
               <div className="flex items-center gap-2 rounded-xl border border-white/30 bg-white/85 px-3 py-3">
                 <Lock size={16} className="text-gray-500" />
                 <input
@@ -141,10 +161,16 @@ export function Register() {
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
                   className="text-gray-500 hover:text-gray-700"
                   aria-label={
-                    showConfirmPassword ? "Ẩn mật khẩu xác nhận" : "Hiện mật khẩu xác nhận"
+                    showConfirmPassword
+                      ? "Ẩn mật khẩu xác nhận"
+                      : "Hiện mật khẩu xác nhận"
                   }
                 >
-                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showConfirmPassword ? (
+                    <EyeOff size={16} />
+                  ) : (
+                    <Eye size={16} />
+                  )}
                 </button>
               </div>
             </label>
@@ -161,7 +187,10 @@ export function Register() {
 
             <p className="text-center text-xs text-[#D8F3DC]">
               Đã có tài khoản?{" "}
-              <Link to="/login" className="text-white underline underline-offset-2">
+              <Link
+                to="/login"
+                className="text-white underline underline-offset-2"
+              >
                 Đăng nhập
               </Link>
             </p>

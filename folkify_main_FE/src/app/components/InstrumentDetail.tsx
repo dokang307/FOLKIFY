@@ -15,8 +15,14 @@ import {
   Clock3,
 } from "lucide-react";
 import { instruments } from "../data/instruments";
-import { getCompletedLessonsCount, isLessonCompleted } from "../data/lessonProgress";
+import {
+  getCompletedLessonsCount,
+  isLessonCompleted,
+} from "../data/lessonProgress";
 import folkifyLogo from "../../assets/logofolkify.png";
+import { useLessons } from "../../hooks/useLessons";
+import { Loading } from "../../components/Loading";
+import { ErrorMessage } from "../../components/ErrorMessage";
 
 const tabs = ["Bài học", "Bài hát", "Thông tin"];
 const clipStatusLabel = {
@@ -29,6 +35,7 @@ export function InstrumentDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
+  const { lessons: apiLessons, loading, error } = useLessons(id ?? null);
 
   const instrument = instruments.find((i) => i.id === id);
   if (!instrument) {
@@ -36,7 +43,10 @@ export function InstrumentDetail() {
       <div className="flex items-center justify-center h-screen bg-[#F7FAF8]">
         <div className="text-center">
           <p className="text-gray-500">Không tìm thấy nhạc cụ</p>
-          <button onClick={() => navigate("/learn")} className="mt-3 text-[#2D6A4F] text-sm">
+          <button
+            onClick={() => navigate("/learn")}
+            className="mt-3 text-[#2D6A4F] text-sm"
+          >
             ← Quay lại
           </button>
         </div>
@@ -44,18 +54,33 @@ export function InstrumentDetail() {
     );
   }
 
-  const completedLessons = getCompletedLessonsCount(instrument);
-  const progressPercent = Math.round((completedLessons / instrument.lessons.length) * 100);
+  // Use API lessons if available, otherwise fallback to static data
+  const lessonsData = apiLessons.length > 0 ? apiLessons : instrument.lessons;
 
-  const beginnerLessons = instrument.lessons.filter((l) => l.level === "Beginner");
-  const intermediateLessons = instrument.lessons.filter((l) => l.level === "Intermediate");
-  const advancedLessons = instrument.lessons.filter((l) => l.level === "Advanced");
+  const completedLessons = getCompletedLessonsCount(instrument);
+  const progressPercent = Math.round(
+    (completedLessons / lessonsData.length) * 100,
+  );
+
+  const beginnerLessons = lessonsData.filter((l) => l.level === "Beginner");
+  const intermediateLessons = lessonsData.filter(
+    (l) => l.level === "Intermediate",
+  );
+  const advancedLessons = lessonsData.filter((l) => l.level === "Advanced");
+
+  if (loading) {
+    return <Loading message="Đang tải bài học..." />;
+  }
 
   return (
     <div className="flex flex-col min-h-full bg-[#F7FAF8]">
       {/* Hero */}
       <div className="relative h-56 overflow-hidden">
-        <img src={instrument.image} alt={instrument.name} className="w-full h-full object-cover object-[50%_22%]" />
+        <img
+          src={instrument.image}
+          alt={instrument.name}
+          className="w-full h-full object-cover object-[50%_22%]"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-[#1A3A2B]/90 via-black/20 to-black/10" />
 
         {/* Back button */}
@@ -67,11 +92,7 @@ export function InstrumentDetail() {
         </button>
 
         <div className="absolute top-12 right-4 flex items-center gap-1.5 bg-black/30 backdrop-blur-sm rounded-xl px-2.5 py-1.5">
-          <img
-            src={folkifyLogo}
-            alt="Folkify"
-            className="w-6 h-6 rounded-lg"
-          />
+          <img src={folkifyLogo} alt="Folkify" className="w-6 h-6 rounded-lg" />
           <span className="text-white text-sm" style={{ fontWeight: 700 }}>
             Folkify
           </span>
@@ -93,7 +114,9 @@ export function InstrumentDetail() {
               <p className="text-[#52B788] text-xs">{instrument.englishName}</p>
               <div className="flex items-center gap-2 mt-1">
                 <MapPin size={12} className="text-[#95D5B2]" />
-                <span className="text-[#95D5B2] text-xs">{instrument.region}</span>
+                <span className="text-[#95D5B2] text-xs">
+                  {instrument.region}
+                </span>
               </div>
             </div>
             <div className="text-right">
@@ -108,7 +131,7 @@ export function InstrumentDetail() {
         <div className="flex items-center justify-between mb-2">
           <p className="text-gray-600 text-sm">Tiến độ học</p>
           <p className="text-[#2D6A4F] text-sm" style={{ fontWeight: 600 }}>
-            {completedLessons}/{instrument.lessons.length} bài
+            {completedLessons}/{lessonsData.length} bài
           </p>
         </div>
         <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -159,13 +182,18 @@ export function InstrumentDetail() {
 
       {/* Tab Content */}
       <div className="flex-1 px-4 py-4 pb-[calc(14rem+env(safe-area-inset-bottom))]">
+        {error && (
+          <div className="mb-4">
+            <ErrorMessage message={error} />
+          </div>
+        )}
         {/* Lessons Tab */}
         {activeTab === 0 && (
           <div className="space-y-3">
             <p className="text-gray-500 text-xs mb-4">
               Hoàn thành các bài học theo thứ tự để nắm vững kỹ năng
             </p>
-            {instrument.lessons.map((lesson, index) => {
+            {lessonsData.map((lesson, index) => {
               const isLocked = index > completedLessons;
               const isCompleted = isLessonCompleted(instrument.id, lesson);
               const isCurrent = index === completedLessons;
@@ -176,14 +204,15 @@ export function InstrumentDetail() {
                 lesson.level === "Beginner"
                   ? "bg-green-100 text-green-700"
                   : lesson.level === "Intermediate"
-                  ? "bg-yellow-100 text-yellow-700"
-                  : "bg-red-100 text-red-700";
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-red-100 text-red-700";
 
               return (
                 <div
                   key={lesson.id}
                   onClick={() =>
-                    !isLocked && navigate(`/learn/${instrument.id}/lesson/${lesson.id}`)
+                    !isLocked &&
+                    navigate(`/learn/${instrument.id}/lesson/${lesson.id}`)
                   }
                   className={`bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border transition-transform ${
                     isLocked
@@ -213,7 +242,11 @@ export function InstrumentDetail() {
                           <CheckCircle size={12} className="text-white" />
                         </div>
                       ) : (
-                        <Play size={12} fill="white" className="text-white ml-0.5" />
+                        <Play
+                          size={12}
+                          fill="white"
+                          className="text-white ml-0.5"
+                        />
                       )}
                     </div>
                     {!isLocked && !isClipReady && (
@@ -227,22 +260,36 @@ export function InstrumentDetail() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-gray-800 text-sm truncate" style={{ fontWeight: 600 }}>
+                    <p
+                      className="text-gray-800 text-sm truncate"
+                      style={{ fontWeight: 600 }}
+                    >
                       {lesson.title}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${levelStyle}`}>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full ${levelStyle}`}
+                      >
                         {lesson.level}
                       </span>
-                      <span className="text-gray-400 text-xs">{lesson.duration}</span>
+                      <span className="text-gray-400 text-xs">
+                        {lesson.duration}
+                      </span>
                     </div>
                     {!isClipReady && (
-                      <p className="text-[10px] text-amber-600 mt-0.5">{clipStatusLabel[clipStatus]}</p>
+                      <p className="text-[10px] text-amber-600 mt-0.5">
+                        {clipStatusLabel[clipStatus]}
+                      </p>
                     )}
                   </div>
 
                   <div className="flex flex-col items-end gap-1">
-                    <span className="text-[#2D6A4F] text-xs" style={{ fontWeight: 700 }}>+{lesson.xp} XP</span>
+                    <span
+                      className="text-[#2D6A4F] text-xs"
+                      style={{ fontWeight: 700 }}
+                    >
+                      +{lesson.xp} XP
+                    </span>
                     {!isLocked && (
                       <ChevronRight size={14} className="text-gray-300" />
                     )}
@@ -264,14 +311,23 @@ export function InstrumentDetail() {
                 key={i}
                 className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-gray-100"
               >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${instrument.bgGradient} flex items-center justify-center flex-shrink-0`}>
+                <div
+                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${instrument.bgGradient} flex items-center justify-center flex-shrink-0`}
+                >
                   <Music size={18} className="text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-800 text-sm" style={{ fontWeight: 600 }}>{song.title}</p>
+                  <p
+                    className="text-gray-800 text-sm"
+                    style={{ fontWeight: 600 }}
+                  >
+                    {song.title}
+                  </p>
                   <p className="text-gray-400 text-xs mt-0.5">{song.artist}</p>
                 </div>
-                <span className="text-gray-400 text-xs flex-shrink-0">{song.duration}</span>
+                <span className="text-gray-400 text-xs flex-shrink-0">
+                  {song.duration}
+                </span>
               </div>
             ))}
           </div>
@@ -281,33 +337,75 @@ export function InstrumentDetail() {
         {activeTab === 2 && (
           <div className="space-y-4">
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-              <p className="text-[#1A3A2B] text-sm" style={{ fontWeight: 700 }}>Giới thiệu</p>
-              <p className="text-gray-600 text-xs mt-2 leading-relaxed">{instrument.description}</p>
+              <p className="text-[#1A3A2B] text-sm" style={{ fontWeight: 700 }}>
+                Giới thiệu
+              </p>
+              <p className="text-gray-600 text-xs mt-2 leading-relaxed">
+                {instrument.description}
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { icon: Info, label: "Nguồn gốc", value: instrument.origin, bg: "bg-[#E8F5EE]", color: "text-[#2D6A4F]" },
-                { icon: Layers, label: "Chất liệu", value: instrument.material, bg: "bg-amber-50", color: "text-amber-600" },
-                { icon: Zap, label: "Âm vực", value: instrument.soundRange, bg: "bg-purple-50", color: "text-purple-600" },
-                { icon: Star, label: "Độ khó", value: null, bg: "bg-red-50", color: "text-red-500" },
+                {
+                  icon: Info,
+                  label: "Nguồn gốc",
+                  value: instrument.origin,
+                  bg: "bg-[#E8F5EE]",
+                  color: "text-[#2D6A4F]",
+                },
+                {
+                  icon: Layers,
+                  label: "Chất liệu",
+                  value: instrument.material,
+                  bg: "bg-amber-50",
+                  color: "text-amber-600",
+                },
+                {
+                  icon: Zap,
+                  label: "Âm vực",
+                  value: instrument.soundRange,
+                  bg: "bg-purple-50",
+                  color: "text-purple-600",
+                },
+                {
+                  icon: Star,
+                  label: "Độ khó",
+                  value: null,
+                  bg: "bg-red-50",
+                  color: "text-red-500",
+                },
               ].map((item, i) => (
-                <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+                >
                   <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-7 h-7 ${item.bg} rounded-lg flex items-center justify-center`}>
+                    <div
+                      className={`w-7 h-7 ${item.bg} rounded-lg flex items-center justify-center`}
+                    >
                       <item.icon size={13} className={item.color} />
                     </div>
-                    <p className="text-gray-700 text-xs" style={{ fontWeight: 600 }}>{item.label}</p>
+                    <p
+                      className="text-gray-700 text-xs"
+                      style={{ fontWeight: 600 }}
+                    >
+                      {item.label}
+                    </p>
                   </div>
                   {item.value ? (
-                    <p className="text-gray-500 text-[11px] leading-relaxed">{item.value}</p>
+                    <p className="text-gray-500 text-[11px] leading-relaxed">
+                      {item.value}
+                    </p>
                   ) : (
                     <div className="flex gap-0.5 mt-1">
                       {Array.from({ length: 5 }).map((_, j) => (
                         <div
                           key={j}
                           className={`h-2 flex-1 rounded-sm ${
-                            j < instrument.difficulty ? "bg-gradient-to-r from-[#2D6A4F] to-[#52B788]" : "bg-gray-100"
+                            j < instrument.difficulty
+                              ? "bg-gradient-to-r from-[#2D6A4F] to-[#52B788]"
+                              : "bg-gray-100"
                           }`}
                         />
                       ))}
@@ -319,16 +417,26 @@ export function InstrumentDetail() {
 
             {/* Fun Facts */}
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-              <p className="text-[#1A3A2B] text-sm mb-3" style={{ fontWeight: 700 }}>
+              <p
+                className="text-[#1A3A2B] text-sm mb-3"
+                style={{ fontWeight: 700 }}
+              >
                 🌿 Điều thú vị
               </p>
               <div className="space-y-3">
                 {instrument.facts.map((fact, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-[#E8F5EE] flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-[#2D6A4F] text-[10px]" style={{ fontWeight: 700 }}>{i + 1}</span>
+                      <span
+                        className="text-[#2D6A4F] text-[10px]"
+                        style={{ fontWeight: 700 }}
+                      >
+                        {i + 1}
+                      </span>
                     </div>
-                    <p className="text-gray-600 text-xs leading-relaxed">{fact}</p>
+                    <p className="text-gray-600 text-xs leading-relaxed">
+                      {fact}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -343,8 +451,8 @@ export function InstrumentDetail() {
           onClick={() =>
             navigate(
               `/learn/${instrument.id}/lesson/${
-                instrument.lessons[completedLessons]?.id || instrument.lessons[0].id
-              }`
+                lessonsData[completedLessons]?.id || lessonsData[0].id
+              }`,
             )
           }
           className="w-full bg-gradient-to-r from-[#1A3A2B] to-[#2D6A4F] text-white py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-transform"

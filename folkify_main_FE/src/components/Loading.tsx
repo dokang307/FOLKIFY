@@ -1,25 +1,14 @@
-/**
- * Loading component with spinner
- */
+import { Loader2 } from "lucide-react";
 
-export function Loading({ message = "Đang tải..." }: { message?: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center p-8 min-h-[200px]">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-      <p className="mt-4 text-gray-600">{message}</p>
-    </div>
-  );
+interface LoadingProps {
+  message?: string;
 }
 
-export function LoadingInline({
-  message = "Đang tải...",
-}: {
-  message?: string;
-}) {
+export function Loading({ message = "Đang tải..." }: LoadingProps) {
   return (
-    <div className="flex items-center justify-center p-4">
-      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
-      <span className="ml-3 text-gray-600">{message}</span>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#F7FAF8]">
+      <Loader2 size={40} className="text-[#2D6A4F] animate-spin" />
+      <p className="text-gray-600 text-sm mt-4">{message}</p>
     </div>
   );
 }
