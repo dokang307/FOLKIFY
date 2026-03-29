@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Folkify API Test</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 32px;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        opacity: 0.9;
+        font-size: 14px;
+      }
+
+      .content {
+        padding: 30px;
+      }
+
+      .section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+      }
+
+      .section h2 {
+        color: #333;
+        margin-bottom: 15px;
+        font-size: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        color: #555;
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        margin-right: 10px;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      button.secondary {
+        background: #6c757d;
+      }
+
+      .response {
+        margin-top: 20px;
+        padding: 15px;
+        background: #1e1e1e;
+        border-radius: 6px;
+        color: #d4d4d4;
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+        max-height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .response.success {
+        border-left: 4px solid #28a745;
+      }
+
+      .response.error {
+        border-left: 4px solid #dc3545;
+      }
+
+      .status {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .api-info {
+        background: #e7f3ff;
+        border-left: 4px solid #2196f3;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+
+      .api-info strong {
+        color: #1976d2;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🎵 Folkify API Test</h1>
+        <p>Test kết nối với Railway Backend API</p>
+      </div>
+
+      <div class="content">
+        <div class="api-info">
+          <strong>API URL:</strong>
+          <span id="apiUrl">https://folkify-api-production.up.railway.app</span>
+        </div>
+
+        <!-- Health Check -->
+        <div class="section">
+          <h2>🏥 Health Check</h2>
+          <button onclick="checkHealth()">Kiểm tra API</button>
+          <div id="healthResponse"></div>
+        </div>
+
+        <!-- Register -->
+        <div class="section">
+          <h2>📝 Đăng ký tài khoản</h2>
+          <div class="form-group">
+            <label>Tên:</label>
+            <input
+              type="text"
+              id="regName"
+              placeholder="Nguyễn Văn A"
+              value="Test User"
+            />
+          </div>
+          <div class="form-group">
+            <label>Email:</label>
+            <input
+              type="email"
+              id="regEmail"
+              placeholder="email@example.com"
+              value="test@example.com"
+            />
+          </div>
+          <div class="form-group">
+            <label>Mật khẩu:</label>
+            <input
+              type="password"
+              id="regPassword"
+              placeholder="Tối thiểu 8 ký tự"
+              value="Test123456"
+            />
+          </div>
+          <button onclick="register()">Đăng ký</button>
+          <button class="secondary" onclick="clearForm('reg')">Xóa</button>
+          <div id="registerResponse"></div>
+        </div>
+
+        <!-- Login -->
+        <div class="section">
+          <h2>🔐 Đăng nhập</h2>
+          <div class="form-group">
+            <label>Email:</label>
+            <input
+              type="email"
+              id="loginEmail"
+              placeholder="email@example.com"
+              value="test@example.com"
+            />
+          </div>
+          <div class="form-group">
+            <label>Mật khẩu:</label>
+            <input
+              type="password"
+              id="loginPassword"
+              placeholder="Mật khẩu"
+              value="Test123456"
+            />
+          </div>
+          <button onclick="login()">Đăng nhập</button>
+          <button class="secondary" onclick="clearForm('login')">Xóa</button>
+          <div id="loginResponse"></div>
+        </div>
+
+        <!-- Get Instruments -->
+        <div class="section">
+          <h2>🎸 Lấy danh sách nhạc cụ</h2>
+          <button onclick="getInstruments()">Lấy danh sách</button>
+          <div id="instrumentsResponse"></div>
+        </div>
+
+        <!-- Get Profile (requires login) -->
+        <div class="section">
+          <h2>👤 Lấy thông tin profile</h2>
+          <p style="color: #666; font-size: 13px; margin-bottom: 10px">
+            (Cần đăng nhập trước)
+          </p>
+          <button onclick="getProfile()">Lấy profile</button>
+          <div id="profileResponse"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API_URL = "https://folkify-api-production.up.railway.app";
+      let authToken = null;
+
+      function showResponse(elementId, data, isError = false) {
+        const element = document.getElementById(elementId);
+        const statusClass = isError ? "error" : "success";
+        const statusText = isError ? "ERROR" : "SUCCESS";
+
+        element.innerHTML = `
+        <div class="status ${statusClass}">${statusText}</div>
+        <div class="response ${statusClass}">${JSON.stringify(data, null, 2)}</div>
+      `;
+      }
+
+      function showLoading(elementId) {
+        const element = document.getElementById(elementId);
+        element.innerHTML = '<div class="loading"></div>';
+      }
+
+      function clearForm(prefix) {
+        if (prefix === "reg") {
+          document.getElementById("regName").value = "";
+          document.getElementById("regEmail").value = "";
+          document.getElementById("regPassword").value = "";
+        } else if (prefix === "login") {
+          document.getElementById("loginEmail").value = "";
+          document.getElementById("loginPassword").value = "";
+        }
+      }
+
+      async function checkHealth() {
+        showLoading("healthResponse");
+        try {
+          const response = await fetch(`${API_URL}/api/health`);
+          const data = await response.json();
+          showResponse("healthResponse", data, !response.ok);
+        } catch (error) {
+          showResponse("healthResponse", { error: error.message }, true);
+        }
+      }
+
+      async function register() {
+        showLoading("registerResponse");
+        try {
+          const response = await fetch(`${API_URL}/api/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: document.getElementById("regName").value,
+              email: document.getElementById("regEmail").value,
+              password: document.getElementById("regPassword").value,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.token) {
+            authToken = data.token;
+            localStorage.setItem("folkify_token", authToken);
+          }
+
+          showResponse("registerResponse", data, !response.ok);
+        } catch (error) {
+          showResponse("registerResponse", { error: error.message }, true);
+        }
+      }
+
+      async function login() {
+        showLoading("loginResponse");
+        try {
+          const response = await fetch(`${API_URL}/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: document.getElementById("loginEmail").value,
+              password: document.getElementById("loginPassword").value,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.token) {
+            authToken = data.token;
+            localStorage.setItem("folkify_token", authToken);
+          }
+
+          showResponse("loginResponse", data, !response.ok);
+        } catch (error) {
+          showResponse("loginResponse", { error: error.message }, true);
+        }
+      }
+
+      async function getInstruments() {
+        showLoading("instrumentsResponse");
+        try {
+          const response = await fetch(`${API_URL}/api/instruments`);
+          const data = await response.json();
+          showResponse("instrumentsResponse", data, !response.ok);
+        } catch (error) {
+          showResponse("instrumentsResponse", { error: error.message }, true);
+        }
+      }
+
+      async function getProfile() {
+        showLoading("profileResponse");
+
+        const token = authToken || localStorage.getItem("folkify_token");
+
+        if (!token) {
+          showResponse(
+            "profileResponse",
+            {
+              error: "Chưa đăng nhập. Vui lòng đăng nhập trước.",
+            },
+            true,
+          );
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_URL}/api/auth/profile`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const data = await response.json();
+          showResponse("profileResponse", data, !response.ok);
+        } catch (error) {
+          showResponse("profileResponse", { error: error.message }, true);
+        }
+      }
+
+      // Load saved token on page load
+      window.addEventListener("load", () => {
+        const savedToken = localStorage.getItem("folkify_token");
+        if (savedToken) {
+          authToken = savedToken;
+          console.log("Loaded saved token from localStorage");
+        }
+      });
+    </script>
+  </body>
+</html>
