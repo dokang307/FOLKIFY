@@ -75,13 +75,10 @@ export const progressService = {
     lessonId: string,
   ): Promise<PracticeSession | null> {
     try {
-      const response = await api.post<PracticeSession>(
-        "/api/practice-sessions",
-        {
-          lessonId,
-          startedAt: new Date().toISOString(),
-        },
-      );
+      const response = await api.post<PracticeSession>("/api/practice/start", {
+        lessonId,
+        startedAt: new Date().toISOString(),
+      });
       return response;
     } catch (error) {
       console.error("Failed to start practice session:", error);
@@ -102,10 +99,10 @@ export const progressService = {
     },
   ): Promise<PracticeSession | null> {
     try {
-      const response = await api.put<PracticeSession>(
-        `/api/practice-sessions/${sessionId}`,
-        data,
-      );
+      const response = await api.post<PracticeSession>(`/api/practice/end`, {
+        sessionId,
+        ...data,
+      });
       return response;
     } catch (error) {
       console.error("Failed to end practice session:", error);
@@ -192,7 +189,7 @@ export const progressService = {
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       const response = await api.get<{ success: boolean; data: any[] }>(
-        `/api/practice-sessions/history?startDate=${today.toISOString()}&endDate=${tomorrow.toISOString()}`,
+        `/api/practice/history?startDate=${today.toISOString()}&endDate=${tomorrow.toISOString()}`,
       );
 
       // Sum up duration_minutes from all sessions today
