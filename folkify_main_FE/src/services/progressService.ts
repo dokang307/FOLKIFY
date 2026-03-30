@@ -135,9 +135,9 @@ export const progressService = {
         lessonsCompleted: stats.lessons_completed ?? 0,
         practiceMinutes: stats.total_practice_minutes ?? 0,
         level: stats.level ?? 1,
-        totalLessons: stats.total_lessons,
-        completedLessons: stats.completed_lessons,
-        progressPercent: stats.progress_percent,
+        totalLessons: stats.total_lessons ?? 0,
+        completedLessons: stats.lessons_completed ?? 0,
+        progressPercent: stats.progress_percent ?? 0,
       };
     } catch (error) {
       console.error("Failed to fetch user stats from /api/auth/me:", error);

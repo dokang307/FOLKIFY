@@ -16,6 +16,7 @@ import {
 } from '../utils/errors';
 import logger from '../utils/logger';
 import { User, UserStats } from '@prisma/client';
+import { prisma } from '../config/database';
 
 interface RegisterInput {
   email: string;
@@ -182,11 +183,44 @@ export async function refreshAccessToken(refreshToken: string): Promise<{ access
 /**
  * Get current user with stats
  */
-export async function getMe(userId: string): Promise<User & { user_stats: UserStats | null }> {
+export async function getMe(userId: string): Promise<
+  User & {
+    user_stats:
+      | (UserStats & {
+          total_lessons?: number;
+          progress_percent?: number;
+        })
+      | null;
+  }
+> {
   const user = await findUserByIdWithStats(userId);
 
   if (!user) {
     throw new NotFoundError('User not found', 'USER_NOT_FOUND');
+  }
+
+  // Calculate total lessons and progress percentage
+  if (user.user_stats) {
+    // Get total number of lessons in the system
+    const totalLessons = await prisma.lesson.count({
+      where: {
+        status: 'published',
+        deleted_at: null,
+      },
+    });
+
+    // Calculate progress percentage
+    const progressPercent =
+      totalLessons > 0 ? Math.round((user.user_stats.lessons_completed / totalLessons) * 100) : 0;
+
+    return {
+      ...user,
+      user_stats: {
+        ...user.user_stats,
+        total_lessons: totalLessons,
+        progress_percent: progressPercent,
+      },
+    };
   }
 
   return user;
