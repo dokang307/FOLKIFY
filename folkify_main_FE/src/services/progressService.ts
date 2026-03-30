@@ -39,11 +39,14 @@ export interface UserStats {
 export const progressService = {
   /**
    * Get user progress for all lessons
+   * Note: This endpoint doesn't exist in backend yet
+   * For now, we'll get progress from /api/auth/me
    */
   async getUserProgress(): Promise<UserProgress[]> {
     try {
-      const response = await api.get<UserProgress[]>("/api/progress");
-      return response;
+      // TODO: Backend needs to implement /api/progress endpoint
+      // For now, return empty array
+      return [];
     } catch (error) {
       console.error("Failed to fetch user progress:", error);
       return [];
@@ -111,50 +114,37 @@ export const progressService = {
   },
 
   /**
-   * Get user statistics
+   * Get user statistics from /api/auth/me
    */
   async getUserStats(): Promise<UserStats | null> {
     try {
-      const response = await api.get<any>("/api/users/stats");
-      return {
-        totalXp: response.total_xp ?? response.totalXp ?? 0,
-        currentStreak: response.current_streak ?? response.currentStreak ?? 0,
-        longestStreak: response.longest_streak ?? response.longestStreak ?? 0,
-        lessonsCompleted:
-          response.lessons_completed ?? response.lessonsCompleted ?? 0,
-        practiceMinutes:
-          response.total_practice_minutes ?? response.practiceMinutes ?? 0,
-        level: response.level ?? 1,
-        totalLessons: response.total_lessons ?? response.totalLessons,
-        completedLessons:
-          response.completed_lessons ?? response.completedLessons,
-        progressPercent: response.progress_percent ?? response.progressPercent,
-      };
-    } catch (error) {
-      console.error("Failed to fetch user stats:", error);
-      // Fallback: try to get stats from /api/auth/me
-      try {
-        const meResponse = await api.get<any>("/api/auth/me");
-        const stats =
-          meResponse?.data?.stats ||
-          meResponse?.stats ||
-          meResponse?.data?.user?.user_stats ||
-          meResponse?.user_stats;
-        if (!stats) return null;
-        return {
-          totalXp: stats.total_xp ?? 0,
-          currentStreak: stats.current_streak ?? 0,
-          longestStreak: stats.longest_streak ?? 0,
-          lessonsCompleted: stats.lessons_completed ?? 0,
-          practiceMinutes: stats.total_practice_minutes ?? 0,
-          level: stats.level ?? 1,
-          totalLessons: stats.total_lessons,
-          completedLessons: stats.completed_lessons,
-          progressPercent: stats.progress_percent,
-        };
-      } catch {
+      // Get user data with stats from /api/auth/me
+      const response = await api.get<any>("/api/auth/me");
+
+      // Response structure: { success: true, data: { user: { ...user, user_stats: {...} } } }
+      const user = response.data?.user || response.user;
+      const stats = user?.user_stats;
+
+      if (!stats) {
+        console.warn("No user_stats found in /api/auth/me response");
         return null;
       }
+
+      // Map snake_case to camelCase
+      return {
+        totalXp: stats.total_xp ?? 0,
+        currentStreak: stats.current_streak ?? 0,
+        longestStreak: stats.longest_streak ?? 0,
+        lessonsCompleted: stats.lessons_completed ?? 0,
+        practiceMinutes: stats.total_practice_minutes ?? 0,
+        level: stats.level ?? 1,
+        totalLessons: stats.total_lessons,
+        completedLessons: stats.completed_lessons,
+        progressPercent: stats.progress_percent,
+      };
+    } catch (error) {
+      console.error("Failed to fetch user stats from /api/auth/me:", error);
+      return null;
     }
   },
 
