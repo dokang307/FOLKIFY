@@ -74,15 +74,8 @@ export async function authenticateUser(input: {
       },
     };
   } catch (error: any) {
+    // Backend now returns Vietnamese error messages
     const errorMessage = error.message || "Đăng nhập thất bại";
-
-    if (
-      errorMessage.includes("not found") ||
-      errorMessage.includes("Invalid")
-    ) {
-      return { ok: false, error: "Email hoặc mật khẩu không đúng." };
-    }
-
     return { ok: false, error: errorMessage };
   }
 }

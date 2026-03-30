@@ -99,20 +99,26 @@ export async function login(input: LoginInput): Promise<AuthResponse> {
   const user = await findUserByEmail(email);
   if (!user) {
     logger.warn(`Failed login attempt for non-existent email: ${email}`);
-    throw new UnauthorizedError('Invalid email or password', 'INVALID_CREDENTIALS');
+    throw new UnauthorizedError(
+      'Tài khoản không tồn tại hoặc mật khẩu không đúng',
+      'INVALID_CREDENTIALS'
+    );
   }
 
   // Check if user is banned
   if (user.account_status === 'banned') {
     logger.warn(`Banned user attempted login: ${email}`);
-    throw new ForbiddenError('Account has been banned', 'ACCOUNT_BANNED');
+    throw new ForbiddenError('Tài khoản đã bị khóa', 'ACCOUNT_BANNED');
   }
 
   // Verify password
   const isPasswordValid = await comparePassword(password, user.password_hash);
   if (!isPasswordValid) {
     logger.warn(`Failed login attempt for ${email}: incorrect password`);
-    throw new UnauthorizedError('Invalid email or password', 'INVALID_CREDENTIALS');
+    throw new UnauthorizedError(
+      'Tài khoản không tồn tại hoặc mật khẩu không đúng',
+      'INVALID_CREDENTIALS'
+    );
   }
 
   // Update last_login_at
