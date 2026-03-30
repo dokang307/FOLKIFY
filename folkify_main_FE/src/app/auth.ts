@@ -33,6 +33,10 @@ export async function registerUser(input: {
     // Save auth data (use accessToken from backend)
     authService.saveAuthData(response.accessToken, response.user);
 
+    // Sync subscription plan from account_type (new users are always "free")
+    const accountType = response.user.account_type || "free";
+    localStorage.setItem("folkify_plan_tier", accountType);
+
     return { ok: true };
   } catch (error: any) {
     return {
@@ -57,6 +61,10 @@ export async function authenticateUser(input: {
 
     // Save auth data (use accessToken from backend)
     authService.saveAuthData(response.accessToken, response.user);
+
+    // Sync subscription plan from account_type in database
+    const accountType = response.user.account_type || "free";
+    localStorage.setItem("folkify_plan_tier", accountType);
 
     return {
       ok: true,

@@ -30,6 +30,10 @@ export interface UserStats {
   longestStreak: number;
   lessonsCompleted: number;
   practiceMinutes: number;
+  level: number;
+  totalLessons?: number;
+  completedLessons?: number;
+  progressPercent?: number;
 }
 
 export const progressService = {
@@ -111,11 +115,46 @@ export const progressService = {
    */
   async getUserStats(): Promise<UserStats | null> {
     try {
-      const response = await api.get<UserStats>("/api/users/stats");
-      return response;
+      const response = await api.get<any>("/api/users/stats");
+      return {
+        totalXp: response.total_xp ?? response.totalXp ?? 0,
+        currentStreak: response.current_streak ?? response.currentStreak ?? 0,
+        longestStreak: response.longest_streak ?? response.longestStreak ?? 0,
+        lessonsCompleted:
+          response.lessons_completed ?? response.lessonsCompleted ?? 0,
+        practiceMinutes:
+          response.total_practice_minutes ?? response.practiceMinutes ?? 0,
+        level: response.level ?? 1,
+        totalLessons: response.total_lessons ?? response.totalLessons,
+        completedLessons:
+          response.completed_lessons ?? response.completedLessons,
+        progressPercent: response.progress_percent ?? response.progressPercent,
+      };
     } catch (error) {
       console.error("Failed to fetch user stats:", error);
-      return null;
+      // Fallback: try to get stats from /api/auth/me
+      try {
+        const meResponse = await api.get<any>("/api/auth/me");
+        const stats =
+          meResponse?.data?.stats ||
+          meResponse?.stats ||
+          meResponse?.data?.user?.user_stats ||
+          meResponse?.user_stats;
+        if (!stats) return null;
+        return {
+          totalXp: stats.total_xp ?? 0,
+          currentStreak: stats.current_streak ?? 0,
+          longestStreak: stats.longest_streak ?? 0,
+          lessonsCompleted: stats.lessons_completed ?? 0,
+          practiceMinutes: stats.total_practice_minutes ?? 0,
+          level: stats.level ?? 1,
+          totalLessons: stats.total_lessons,
+          completedLessons: stats.completed_lessons,
+          progressPercent: stats.progress_percent,
+        };
+      } catch {
+        return null;
+      }
     }
   },
 

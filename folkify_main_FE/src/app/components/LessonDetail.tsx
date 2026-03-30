@@ -14,8 +14,12 @@ import {
   Info,
 } from "lucide-react";
 import { instruments } from "../data/instruments";
-import { isLessonCompleted, markLessonCompleted as persistLessonCompleted } from "../data/lessonProgress";
+import {
+  isLessonCompleted,
+  markLessonCompleted as persistLessonCompleted,
+} from "../data/lessonProgress";
 import folkifyLogo from "../../assets/logofolkify.png";
+import { progressService } from "../../services/progressService";
 
 const clipStatusLabel = {
   available: "Đã có clip",
@@ -44,7 +48,10 @@ export function LessonDetail() {
       <div className="flex items-center justify-center h-screen bg-[#F7FAF8]">
         <div className="text-center">
           <p className="text-gray-500">Không tìm thấy bài học</p>
-          <button onClick={() => navigate(-1)} className="mt-3 text-[#2D6A4F] text-sm">
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-3 text-[#2D6A4F] text-sm"
+          >
             ← Quay lại
           </button>
         </div>
@@ -59,8 +66,8 @@ export function LessonDetail() {
     lesson.level === "Beginner"
       ? "bg-green-100 text-green-700"
       : lesson.level === "Intermediate"
-      ? "bg-yellow-100 text-yellow-700"
-      : "bg-red-100 text-red-700";
+        ? "bg-yellow-100 text-yellow-700"
+        : "bg-red-100 text-red-700";
 
   const clipStatus = lesson.clipStatus ?? "in_progress";
   const isClipReady = clipStatus === "available";
@@ -68,12 +75,22 @@ export function LessonDetail() {
   const showYoutubeVideo = isClipReady && Boolean(youtubeEmbedUrl);
   const clipEta = lesson.clipEta ?? "sẽ cập nhật sớm";
   const completedPersisted = isLessonCompleted(instrument.id, lesson);
-  const markLessonAsCompleted = () => {
+  const markLessonAsCompleted = async () => {
     if (isLessonCompleted(instrument.id, lesson)) return;
+
+    // Save to localStorage for immediate UI update
     persistLessonCompleted(instrument.id, lesson.id);
     setLessonFinished(true);
     setClipNotice("Bạn đã hoàn thành bài học.");
     window.setTimeout(() => setClipNotice(null), 2600);
+
+    // Sync to database
+    try {
+      await progressService.completeLesson(lesson.id);
+    } catch (error) {
+      console.error("Failed to sync lesson completion to database:", error);
+      // Don't block UI if API fails
+    }
   };
 
   const clearWatchProgressTimer = () => {
@@ -134,7 +151,8 @@ export function LessonDetail() {
 
     const createPlayer = () => {
       const yt = (window as any).YT;
-      if (!yt?.Player || !youtubeMountRef.current || youtubePlayerRef.current) return;
+      if (!yt?.Player || !youtubeMountRef.current || youtubePlayerRef.current)
+        return;
 
       const parsedUrl = new URL(youtubeEmbedUrl);
       const videoId = getVideoId(youtubeEmbedUrl);
@@ -168,7 +186,9 @@ export function LessonDetail() {
     if ((window as any).YT?.Player) {
       createPlayer();
     } else {
-      const existingScript = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
+      const existingScript = document.querySelector(
+        'script[src="https://www.youtube.com/iframe_api"]',
+      );
       if (!existingScript) {
         const script = document.createElement("script");
         script.src = "https://www.youtube.com/iframe_api";
@@ -232,7 +252,9 @@ export function LessonDetail() {
 
           <div className="flex items-start justify-between">
             <div>
-              <span className={`text-xs px-2.5 py-1 rounded-full ${levelStyle}`}>
+              <span
+                className={`text-xs px-2.5 py-1 rounded-full ${levelStyle}`}
+              >
                 {lesson.level}
               </span>
               <div className="flex items-center gap-2 mt-2 pr-4">
@@ -249,7 +271,12 @@ export function LessonDetail() {
               </div>
               <div className="flex items-center gap-1.5 bg-[#2D6A4F]/60 rounded-full px-3 py-1.5">
                 <Zap size={12} className="text-yellow-400" />
-                <span className="text-yellow-300 text-xs" style={{ fontWeight: 700 }}>+{lesson.xp} XP</span>
+                <span
+                  className="text-yellow-300 text-xs"
+                  style={{ fontWeight: 700 }}
+                >
+                  +{lesson.xp} XP
+                </span>
               </div>
             </div>
           </div>
@@ -260,8 +287,12 @@ export function LessonDetail() {
         {/* Progress */}
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-gray-700 text-sm" style={{ fontWeight: 600 }}>Tiến độ bài học</p>
-            <p className="text-[#2D6A4F] text-sm" style={{ fontWeight: 700 }}>{progress}%</p>
+            <p className="text-gray-700 text-sm" style={{ fontWeight: 600 }}>
+              Tiến độ bài học
+            </p>
+            <p className="text-[#2D6A4F] text-sm" style={{ fontWeight: 700 }}>
+              {progress}%
+            </p>
           </div>
           <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
             <div
@@ -276,8 +307,12 @@ export function LessonDetail() {
 
         {/* Description */}
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <p className="text-[#1A3A2B] text-sm" style={{ fontWeight: 700 }}>📋 Giới thiệu bài học</p>
-          <p className="text-gray-600 text-xs mt-2 leading-relaxed">{lesson.description}</p>
+          <p className="text-[#1A3A2B] text-sm" style={{ fontWeight: 700 }}>
+            📋 Giới thiệu bài học
+          </p>
+          <p className="text-gray-600 text-xs mt-2 leading-relaxed">
+            {lesson.description}
+          </p>
         </div>
 
         {/* Video */}
@@ -288,11 +323,15 @@ export function LessonDetail() {
                 <Info size={14} className="text-amber-700" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-amber-800 text-xs" style={{ fontWeight: 700 }}>
+                <p
+                  className="text-amber-800 text-xs"
+                  style={{ fontWeight: 700 }}
+                >
                   {clipStatusLabel[clipStatus]}
                 </p>
                 <p className="text-amber-700 text-[11px] mt-1">
-                  Đây là clip mô phỏng luồng học. Bản chính thức dự kiến {clipEta}.
+                  Đây là clip mô phỏng luồng học. Bản chính thức dự kiến{" "}
+                  {clipEta}.
                 </p>
               </div>
             </div>
@@ -301,14 +340,23 @@ export function LessonDetail() {
 
         {showYoutubeVideo ? (
           <div className="bg-[#1A3A2B] rounded-2xl p-3">
-            <div className="relative w-full overflow-hidden rounded-xl" style={{ paddingTop: "56.25%" }}>
-              <div ref={youtubeMountRef} className="absolute inset-0 h-full w-full" />
+            <div
+              className="relative w-full overflow-hidden rounded-xl"
+              style={{ paddingTop: "56.25%" }}
+            >
+              <div
+                ref={youtubeMountRef}
+                className="absolute inset-0 h-full w-full"
+              />
             </div>
           </div>
         ) : (
           <div className="bg-[#1A3A2B] rounded-2xl p-5">
             {/* Thumbnail */}
-            <div className="relative rounded-xl overflow-hidden mb-4" style={{ height: 120 }}>
+            <div
+              className="relative rounded-xl overflow-hidden mb-4"
+              style={{ height: 120 }}
+            >
               <img
                 src={lesson.videoThumb}
                 alt={lesson.title}
@@ -326,7 +374,11 @@ export function LessonDetail() {
                   {isPlaying ? (
                     <Pause size={22} className="text-[#1A3A2B]" />
                   ) : (
-                    <Play size={22} className="text-[#1A3A2B] ml-0.5" fill="#1A3A2B" />
+                    <Play
+                      size={22}
+                      className="text-[#1A3A2B] ml-0.5"
+                      fill="#1A3A2B"
+                    />
                   )}
                 </button>
               </div>
@@ -359,19 +411,30 @@ export function LessonDetail() {
               )}
             </div>
 
-            <p className="text-[#95D5B2] text-xs mb-3" style={{ fontWeight: 600 }}>
+            <p
+              className="text-[#95D5B2] text-xs mb-3"
+              style={{ fontWeight: 600 }}
+            >
               {isClipReady ? "🎵 Nghe mẫu bài học" : "🎵 Clip mô phỏng bài học"}
             </p>
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden mb-1.5">
-                  <div className={`h-full rounded-full ${isClipReady ? "w-1/3 bg-[#52B788]" : "w-3/4 bg-amber-400"}`} />
+                  <div
+                    className={`h-full rounded-full ${isClipReady ? "w-1/3 bg-[#52B788]" : "w-3/4 bg-amber-400"}`}
+                  />
                 </div>
                 <div className="flex justify-between">
-                  <span className={`text-xs ${isClipReady ? "text-[#52B788]" : "text-amber-300"}`}>
+                  <span
+                    className={`text-xs ${isClipReady ? "text-[#52B788]" : "text-amber-300"}`}
+                  >
                     {isClipReady ? "0:23" : "Đang dựng"}
                   </span>
-                  <span className={`text-xs ${isClipReady ? "text-[#52B788]" : "text-amber-300"}`}>{lesson.duration}</span>
+                  <span
+                    className={`text-xs ${isClipReady ? "text-[#52B788]" : "text-amber-300"}`}
+                  >
+                    {lesson.duration}
+                  </span>
                 </div>
               </div>
               <Volume2 size={16} className="text-[#52B788] flex-shrink-0" />
@@ -386,7 +449,9 @@ export function LessonDetail() {
 
         {/* Steps */}
         <div className="space-y-3">
-          <p className="text-[#1A3A2B] text-sm" style={{ fontWeight: 700 }}>📝 Các bước thực hiện</p>
+          <p className="text-[#1A3A2B] text-sm" style={{ fontWeight: 700 }}>
+            📝 Các bước thực hiện
+          </p>
           {lesson.steps.map((step, i) => {
             const done = completedSteps.has(i);
             return (
@@ -405,10 +470,17 @@ export function LessonDetail() {
                   {done ? (
                     <CheckCircle size={16} className="text-white" />
                   ) : (
-                    <span className="text-[#2D6A4F] text-xs" style={{ fontWeight: 700 }}>{i + 1}</span>
+                    <span
+                      className="text-[#2D6A4F] text-xs"
+                      style={{ fontWeight: 700 }}
+                    >
+                      {i + 1}
+                    </span>
                   )}
                 </div>
-                <p className={`text-sm leading-relaxed flex-1 ${done ? "text-gray-400 line-through" : "text-gray-700"}`}>
+                <p
+                  className={`text-sm leading-relaxed flex-1 ${done ? "text-gray-400 line-through" : "text-gray-700"}`}
+                >
                   {step}
                 </p>
               </div>
@@ -425,7 +497,10 @@ export function LessonDetail() {
             <div className="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
               <Lightbulb size={16} className="text-amber-700" />
             </div>
-            <p className="text-amber-800 text-sm flex-1 text-left" style={{ fontWeight: 600 }}>
+            <p
+              className="text-amber-800 text-sm flex-1 text-left"
+              style={{ fontWeight: 600 }}
+            >
               💡 Mẹo và lưu ý
             </p>
             <ChevronRight
@@ -440,7 +515,9 @@ export function LessonDetail() {
                   <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Star size={10} className="text-amber-700" fill="#B45309" />
                   </div>
-                  <p className="text-amber-700 text-xs leading-relaxed">{tip}</p>
+                  <p className="text-amber-700 text-xs leading-relaxed">
+                    {tip}
+                  </p>
                 </div>
               ))}
             </div>
@@ -453,11 +530,20 @@ export function LessonDetail() {
             <div className="w-14 h-14 bg-[#2D6A4F]/10 rounded-full flex items-center justify-center mx-auto mb-3">
               <CheckCircle size={28} className="text-[#2D6A4F]" />
             </div>
-            <p className="text-[#1A3A2B] text-base" style={{ fontWeight: 700 }}>Tuyệt vời! 🎉</p>
-            <p className="text-[#2D6A4F] text-xs mt-1 mb-1">Bạn đã hoàn thành bài học này!</p>
+            <p className="text-[#1A3A2B] text-base" style={{ fontWeight: 700 }}>
+              Tuyệt vời! 🎉
+            </p>
+            <p className="text-[#2D6A4F] text-xs mt-1 mb-1">
+              Bạn đã hoàn thành bài học này!
+            </p>
             <div className="flex items-center justify-center gap-1 mb-4">
               <Zap size={14} className="text-yellow-500" />
-              <span className="text-yellow-600 text-sm" style={{ fontWeight: 700 }}>+{lesson.xp} XP nhận được</span>
+              <span
+                className="text-yellow-600 text-sm"
+                style={{ fontWeight: 700 }}
+              >
+                +{lesson.xp} XP nhận được
+              </span>
             </div>
             <div className="flex gap-3">
               <button

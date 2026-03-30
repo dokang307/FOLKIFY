@@ -5,11 +5,24 @@
 
 import { api } from "../config/api";
 
+/**
+ * Normalize user object from backend (snake_case) to frontend (camelCase)
+ */
+function normalizeUser(user: any): User {
+  return {
+    ...user,
+    fullName: user.fullName || user.full_name || "",
+  };
+}
+
 export interface User {
   id: string;
   email: string;
-  fullName: string; // Backend uses fullName
+  fullName: string; // Used in frontend
+  full_name?: string; // Received from backend (snake_case)
   role: string;
+  account_type?: string;
+  account_status?: string;
   createdAt?: string;
 }
 
@@ -45,7 +58,9 @@ export const authService = {
       true, // Skip auth for registration
     );
     // Backend returns { success: true, data: { accessToken, refreshToken, user } }
-    return response.data;
+    const data = response.data;
+    data.user = normalizeUser(data.user);
+    return data;
   },
 
   /**
@@ -58,7 +73,9 @@ export const authService = {
       true, // Skip auth for login
     );
     // Backend returns { success: true, data: { accessToken, refreshToken, user } }
-    return response.data;
+    const data = response.data;
+    data.user = normalizeUser(data.user);
+    return data;
   },
 
   /**

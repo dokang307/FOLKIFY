@@ -15,11 +15,18 @@ export function useUserProgress() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState(() =>
+    localStorage.getItem("folkify_token"),
+  );
 
   useEffect(() => {
     async function loadProgress() {
+      // Check current token
+      const currentToken = localStorage.getItem("folkify_token");
+      setAuthToken(currentToken);
+
       // Only load if user is authenticated
-      if (!isAuthenticated()) {
+      if (!currentToken) {
         setLoading(false);
         return;
       }
@@ -42,10 +49,11 @@ export function useUserProgress() {
     }
 
     loadProgress();
-  }, []);
+  }, [authToken]); // Refetch when token changes
 
   const refetch = async () => {
-    if (!isAuthenticated()) return;
+    const currentToken = localStorage.getItem("folkify_token");
+    if (!currentToken) return;
 
     setLoading(true);
     try {
