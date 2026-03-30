@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { createPortal } from "react-dom";
 import {
@@ -23,6 +23,7 @@ import tyBaImg from "../../assets/tyba.jpg";
 import folkifyLogo from "../../assets/logofolkify.png";
 import { getCurrentUser } from "../auth";
 import { useUserProgress } from "../../hooks/useUserProgress";
+import { progressService } from "../../services/progressService";
 import { Loading } from "../../components/Loading";
 import { ErrorMessage } from "../../components/ErrorMessage";
 
@@ -36,25 +37,6 @@ const instrumentPhotos: Record<string, string> = {
 };
 
 const featuredInstrument = instruments[0];
-
-const recentLessons = [
-  {
-    instrumentId: "dan-tranh",
-    lessonId: "dt-3",
-    title: "Bài Lý Con Sáo",
-    instrument: "Đàn Tranh",
-    progress: 35,
-    color: "from-amber-400 to-amber-600",
-  },
-  {
-    instrumentId: "sao-truc",
-    lessonId: "st-3",
-    title: "Bài Trống Cơm",
-    instrument: "Sáo Trúc",
-    progress: 60,
-    color: "from-emerald-400 to-green-600",
-  },
-];
 
 const achievements = [
   {
@@ -129,8 +111,23 @@ export function Home() {
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState(mockNotifications);
+  const [recentLessons, setRecentLessons] = useState<any[]>([]);
+  const [todayPracticeMinutes, setTodayPracticeMinutes] = useState(0);
   const userName = getCurrentUser()?.name ?? "Học viên";
   const { progress, stats, loading, error } = useUserProgress();
+
+  // Fetch recent lessons and today's practice time
+  useEffect(() => {
+    const fetchData = async () => {
+      const [lessons, practiceTime] = await Promise.all([
+        progressService.getRecentLessons(2),
+        progressService.getTodayPracticeTime(),
+      ]);
+      setRecentLessons(lessons);
+      setTodayPracticeMinutes(practiceTime);
+    };
+    fetchData();
+  }, []);
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
@@ -433,47 +430,66 @@ export function Home() {
               Xem tất cả <ChevronRight size={14} />
             </button>
           </div>
-          <div className="space-y-3">
-            {recentLessons.map((lesson, i) => (
-              <div
-                key={i}
-                onClick={() =>
-                  navigate(
-                    `/learn/${lesson.instrumentId}/lesson/${lesson.lessonId}`,
-                  )
-                }
-                className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-gray-100 cursor-pointer active:scale-[0.98] transition-transform"
-              >
+          {recentLessons.length > 0 ? (
+            <div className="space-y-3">
+              {recentLessons.map((lesson) => (
                 <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${lesson.color} flex items-center justify-center flex-shrink-0`}
+                  key={lesson.id}
+                  onClick={() =>
+                    navigate(
+                      `/learn/${lesson.instrument.id}/lesson/${lesson.id}`,
+                    )
+                  }
+                  className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-gray-100 cursor-pointer active:scale-[0.98] transition-transform"
                 >
-                  <Play size={16} fill="white" className="text-white ml-0.5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p
-                    className="text-gray-800 text-sm truncate"
-                    style={{ fontWeight: 600 }}
+                  <div
+                    className={`w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0`}
                   >
-                    {lesson.title}
-                  </p>
-                  <p className="text-gray-400 text-xs mt-0.5">
-                    {lesson.instrument}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full bg-gradient-to-r ${lesson.color} rounded-full`}
-                        style={{ width: `${lesson.progress}%` }}
-                      />
+                    <Play
+                      size={16}
+                      fill="white"
+                      className="text-white ml-0.5"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="text-gray-800 text-sm truncate"
+                      style={{ fontWeight: 600 }}
+                    >
+                      {lesson.title}
+                    </p>
+                    <p className="text-gray-400 text-xs mt-0.5">
+                      {lesson.instrument.name}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full`}
+                          style={{ width: `${lesson.progress_percentage}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-400">
+                        {lesson.progress_percentage}%
+                      </span>
                     </div>
-                    <span className="text-xs text-gray-400">
-                      {lesson.progress}%
-                    </span>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl p-6 text-center border border-gray-100">
+              <p className="text-gray-400 text-sm">
+                Chưa có bài học nào đang học
+              </p>
+              <button
+                onClick={() => navigate("/learn")}
+                className="mt-3 text-[#2D6A4F] text-sm"
+                style={{ fontWeight: 600 }}
+              >
+                Bắt đầu học ngay
+              </button>
+            </div>
+          )}
         </section>
 
         {/* Featured Instrument */}
@@ -621,7 +637,7 @@ export function Home() {
           <div className="flex-1">
             <p className="text-gray-400 text-xs">Thời gian học hôm nay</p>
             <p className="text-[#1A3A2B] text-base" style={{ fontWeight: 700 }}>
-              45 phút
+              {todayPracticeMinutes} phút
             </p>
           </div>
           <div className="text-right">

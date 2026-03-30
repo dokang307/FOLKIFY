@@ -3,6 +3,7 @@ import {
   getLessonController,
   completeLessonController,
   searchLessonsController,
+  getRecentLessonsController,
 } from '../controllers/lesson.controller';
 import { authenticate } from '../middleware/authenticate';
 
@@ -58,6 +59,28 @@ const router = Router();
  *                   $ref: '#/components/schemas/Pagination'
  */
 router.get('/search', searchLessonsController);
+
+/**
+ * @swagger
+ * /api/lessons/recent:
+ *   get:
+ *     summary: Get user's recent lessons (in progress)
+ *     tags: [Lessons]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 5
+ *     responses:
+ *       200:
+ *         description: Recent lessons with progress
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/recent', authenticate, getRecentLessonsController);
 
 /**
  * @swagger

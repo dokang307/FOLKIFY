@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { getLessonWithAccess, completeLesson } from '../services/lesson.service';
+import { getLessonWithAccess, completeLesson, getRecentLessons } from '../services/lesson.service';
 import { searchLessons } from '../repositories/lesson.repository';
 import { AppError } from '../utils/errors';
 import logger from '../utils/logger';
@@ -146,6 +146,51 @@ export async function searchLessonsController(req: Request, res: Response): Prom
     }
 
     logger.error('Search lessons error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+    });
+  }
+}
+
+/**
+ * GET /api/lessons/recent
+ * Get user's recent lessons (in progress) (protected)
+ */
+export async function getRecentLessonsController(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: 'Unauthorized',
+        code: 'UNAUTHORIZED',
+      });
+      return;
+    }
+
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 5;
+
+    // Get recent lessons
+    const lessons = await getRecentLessons(userId, limit);
+
+    res.status(200).json({
+      success: true,
+      data: lessons,
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({
+        success: false,
+        error: error.message,
+        code: error.code,
+      });
+      return;
+    }
+
+    logger.error('Get recent lessons error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',

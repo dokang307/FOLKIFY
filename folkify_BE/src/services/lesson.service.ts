@@ -205,3 +205,50 @@ export async function completeLesson(
     };
   });
 }
+
+/**
+ * Get user's recent lessons (in progress)
+ * @param userId - User ID
+ * @param limit - Number of lessons to return
+ * @returns Recent lessons with progress
+ */
+export async function getRecentLessons(
+  userId: string,
+  limit: number = 5
+): Promise<
+  Array<
+    Lesson & {
+      instrument: Instrument;
+      progress_percentage: number;
+      updated_at_progress: Date;
+    }
+  >
+> {
+  // Get lessons with progress > 0 but not completed
+  const progressRecords = await prisma.userProgress.findMany({
+    where: {
+      user_id: userId,
+      completed: false,
+      progress_percentage: {
+        gt: 0,
+      },
+    },
+    include: {
+      lesson: {
+        include: {
+          instrument: true,
+        },
+      },
+    },
+    orderBy: {
+      updated_at: 'desc',
+    },
+    take: limit,
+  });
+
+  return progressRecords.map((record) => ({
+    ...record.lesson,
+    progress_percentage: record.progress_percentage,
+    updated_at_progress: record.updated_at,
+  }));
+}

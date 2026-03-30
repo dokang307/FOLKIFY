@@ -165,4 +165,46 @@ export const progressService = {
       return [];
     }
   },
+
+  /**
+   * Get recent lessons (in progress)
+   */
+  async getRecentLessons(limit: number = 5): Promise<any[]> {
+    try {
+      const response = await api.get<{ success: boolean; data: any[] }>(
+        `/api/lessons/recent?limit=${limit}`,
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch recent lessons:", error);
+      return [];
+    }
+  },
+
+  /**
+   * Get today's practice time
+   */
+  async getTodayPracticeTime(): Promise<number> {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const response = await api.get<{ success: boolean; data: any[] }>(
+        `/api/practice-sessions/history?startDate=${today.toISOString()}&endDate=${tomorrow.toISOString()}`,
+      );
+
+      // Sum up duration_minutes from all sessions today
+      const totalMinutes = response.data.reduce(
+        (sum: number, session: any) => sum + (session.duration_minutes || 0),
+        0,
+      );
+
+      return totalMinutes;
+    } catch (error) {
+      console.error("Failed to fetch today's practice time:", error);
+      return 0;
+    }
+  },
 };
