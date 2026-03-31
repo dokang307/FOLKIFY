@@ -97,32 +97,30 @@ export function AdminDashboard() {
           </button>
 
           <button
-            onClick={() => navigate("/admin/lessons")}
-            className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow"
+            onClick={() => alert("Tính năng đang phát triển")}
+            className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow opacity-50 cursor-not-allowed"
           >
             <div className="text-blue-600 text-2xl mb-2">📚</div>
             <h3 className="font-semibold text-gray-900">Quản lý bài học</h3>
-            <p className="text-sm text-gray-500 mt-1">Publish và set premium</p>
+            <p className="text-sm text-gray-500 mt-1">Đang phát triển...</p>
           </button>
 
           <button
-            onClick={() => navigate("/admin/analytics")}
-            className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow"
+            onClick={() => alert("Tính năng đang phát triển")}
+            className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow opacity-50 cursor-not-allowed"
           >
             <div className="text-purple-600 text-2xl mb-2">📊</div>
             <h3 className="font-semibold text-gray-900">Thống kê chi tiết</h3>
-            <p className="text-sm text-gray-500 mt-1">Xem báo cáo và biểu đồ</p>
+            <p className="text-sm text-gray-500 mt-1">Đang phát triển...</p>
           </button>
 
           <button
-            onClick={() => navigate("/admin/logs")}
-            className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow"
+            onClick={() => alert("Tính năng đang phát triển")}
+            className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow opacity-50 cursor-not-allowed"
           >
             <div className="text-orange-600 text-2xl mb-2">📝</div>
             <h3 className="font-semibold text-gray-900">Activity Logs</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Lịch sử hoạt động admin
-            </p>
+            <p className="text-sm text-gray-500 mt-1">Đang phát triển...</p>
           </button>
         </div>
 
