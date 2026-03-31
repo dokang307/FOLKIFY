@@ -201,10 +201,9 @@ export async function getMe(userId: string): Promise<
 
   // Calculate total lessons and progress percentage
   if (user.user_stats) {
-    // Get total number of lessons in the system
+    // Get total number of lessons in the system (all non-deleted lessons)
     const totalLessons = await prisma.lesson.count({
       where: {
-        status: 'published',
         deleted_at: null,
       },
     });
