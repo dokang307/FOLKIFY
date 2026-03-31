@@ -68,6 +68,27 @@ class ApiClient {
         // Backend returns { success: false, error: "message", code: "ERROR_CODE" }
         const errorMessage =
           data.error || data.message || `HTTP ${response.status}`;
+
+        // Handle 401 Unauthorized - token expired or invalid
+        if (response.status === 401) {
+          console.warn(
+            "API Client: 401 Unauthorized - clearing auth data and redirecting to login",
+          );
+          // Clear auth data
+          localStorage.removeItem("folkify_token");
+          localStorage.removeItem("folkify_user");
+          localStorage.removeItem("folkify_logged_in");
+          localStorage.removeItem("folkify_plan_tier");
+
+          // Redirect to login if not already there
+          if (
+            typeof window !== "undefined" &&
+            !window.location.pathname.includes("/login")
+          ) {
+            window.location.href = "/login";
+          }
+        }
+
         throw new Error(errorMessage);
       }
 
