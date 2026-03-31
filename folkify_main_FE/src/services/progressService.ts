@@ -115,12 +115,17 @@ export const progressService = {
    */
   async getUserStats(): Promise<UserStats | null> {
     try {
+      console.log("progressService.getUserStats - calling /api/auth/me...");
       // Get user data with stats from /api/auth/me
       const response = await api.get<any>("/api/auth/me");
+      console.log("progressService.getUserStats - response:", response);
 
       // Response structure: { success: true, data: { user: { ...user, user_stats: {...} } } }
       const user = response.data?.user || response.user;
       const stats = user?.user_stats;
+
+      console.log("progressService.getUserStats - user:", user);
+      console.log("progressService.getUserStats - stats:", stats);
 
       if (!stats) {
         console.warn("No user_stats found in /api/auth/me response");
@@ -128,7 +133,7 @@ export const progressService = {
       }
 
       // Map snake_case to camelCase
-      return {
+      const mappedStats = {
         totalXp: stats.total_xp ?? 0,
         currentStreak: stats.current_streak ?? 0,
         longestStreak: stats.longest_streak ?? 0,
@@ -139,6 +144,9 @@ export const progressService = {
         completedLessons: stats.lessons_completed ?? 0,
         progressPercent: stats.progress_percent ?? 0,
       };
+
+      console.log("progressService.getUserStats - mapped stats:", mappedStats);
+      return mappedStats;
     } catch (error) {
       console.error("Failed to fetch user stats from /api/auth/me:", error);
       return null;

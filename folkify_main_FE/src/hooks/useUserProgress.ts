@@ -28,21 +28,25 @@ export function useUserProgress() {
       // Only load if user is authenticated
       if (!currentToken) {
         setLoading(false);
+        setStats(null);
         return;
       }
 
       try {
         setLoading(true);
+        console.log("useUserProgress - fetching stats...");
         const [progressData, statsData] = await Promise.all([
           progressService.getUserProgress(),
           progressService.getUserStats(),
         ]);
+        console.log("useUserProgress - stats received:", statsData);
         setProgress(progressData);
         setStats(statsData);
         setError(null);
       } catch (err: any) {
-        console.error("Failed to load progress:", err);
+        console.error("useUserProgress - Failed to load progress:", err);
         setError(err.message || "Không thể tải tiến độ học tập");
+        setStats(null);
       } finally {
         setLoading(false);
       }
