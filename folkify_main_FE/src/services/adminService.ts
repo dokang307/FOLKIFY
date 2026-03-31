@@ -1,4 +1,4 @@
-import apiClient from "../config/api";
+import { api as apiClient } from "../config/api";
 
 // ============= TYPES =============
 
