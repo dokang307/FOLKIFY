@@ -13,6 +13,8 @@ import { ForgotPassword } from "./components/ForgotPassword";
 import { Register } from "./components/Register";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
+import { AdminDashboard } from "./components/AdminDashboard";
+import { AdminUsers } from "./components/AdminUsers";
 
 export const router = createBrowserRouter([
   {
@@ -40,6 +42,9 @@ export const router = createBrowserRouter([
           { path: "profile", Component: Profile },
         ],
       },
+      // Admin routes (outside Root to have different layout)
+      { path: "/admin", Component: AdminDashboard },
+      { path: "/admin/users", Component: AdminUsers },
     ],
   },
 ]);

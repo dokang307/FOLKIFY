@@ -9,6 +9,7 @@ type StoredUser = {
   name: string;
   email: string;
   password?: string;
+  role: "user" | "admin";
 };
 
 /**
@@ -71,6 +72,7 @@ export async function authenticateUser(input: {
       user: {
         name: response.user.fullName, // Backend uses fullName
         email: response.user.email,
+        role: response.user.role || "user",
       },
     };
   } catch (error: any) {
@@ -94,6 +96,7 @@ export function getCurrentUser(): StoredUser | null {
     return {
       name: savedUser.fullName, // Backend uses fullName
       email: savedUser.email,
+      role: savedUser.role || "user",
     };
   }
 

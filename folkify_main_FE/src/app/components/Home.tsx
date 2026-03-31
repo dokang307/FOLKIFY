@@ -113,7 +113,8 @@ export function Home() {
   const [notifications, setNotifications] = useState(mockNotifications);
   const [recentLessons, setRecentLessons] = useState<any[]>([]);
   const [todayPracticeMinutes, setTodayPracticeMinutes] = useState(0);
-  const userName = getCurrentUser()?.name ?? "Học viên";
+  const currentUser = getCurrentUser();
+  const userName = currentUser?.name ?? "Học viên";
   const { progress, stats, loading, error } = useUserProgress();
 
   // Fetch recent lessons and today's practice time
@@ -330,18 +331,29 @@ export function Home() {
                 </p>
               </div>
             </div>
-            <button
-              className="relative w-10 h-10 bg-white/10 rounded-full flex items-center justify-center border border-white/10"
-              onClick={() => setShowNotifications((prev) => !prev)}
-              aria-label="Mở thông báo"
-            >
-              <Bell size={17} className="text-[#95D5B2]" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#52B788] rounded-full text-[9px] font-bold text-[#1A3A2B] flex items-center justify-center">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
+            <div className="flex items-center gap-2">
+              {/* Admin Dashboard Button - Only show for admin users */}
+              {currentUser?.role === "admin" && (
+                <button
+                  onClick={() => navigate("/admin")}
+                  className="px-3 py-1.5 bg-purple-600 text-white text-xs rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                >
+                  Admin
+                </button>
               )}
-            </button>
+              <button
+                className="relative w-10 h-10 bg-white/10 rounded-full flex items-center justify-center border border-white/10"
+                onClick={() => setShowNotifications((prev) => !prev)}
+                aria-label="Mở thông báo"
+              >
+                <Bell size={17} className="text-[#95D5B2]" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#52B788] rounded-full text-[9px] font-bold text-[#1A3A2B] flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* User greeting */}

@@ -10,8 +10,13 @@ import { api } from "../config/api";
  */
 function normalizeUser(user: any): User {
   return {
-    ...user,
+    id: user.id,
+    email: user.email,
     fullName: user.fullName || user.full_name || "",
+    role: user.role || "user",
+    account_type: user.account_type,
+    account_status: user.account_status,
+    createdAt: user.createdAt || user.created_at,
   };
 }
 
