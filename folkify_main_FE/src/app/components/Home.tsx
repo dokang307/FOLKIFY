@@ -129,6 +129,12 @@ export function Home() {
     fetchData();
   }, []);
 
+  // Debug: Log stats when they change
+  useEffect(() => {
+    console.log("Home - stats updated:", stats);
+    console.log("Home - loading:", loading);
+  }, [stats, loading]);
+
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   const markAllAsRead = () => {
@@ -170,26 +176,34 @@ export function Home() {
   };
 
   // Use API data if available, otherwise fallback to static data
-  const totalLessons =
-    stats?.totalLessons ??
-    instruments.reduce((acc, i) => acc + i.lessons.length, 0);
-  const completedLessons =
-    stats?.completedLessons ??
-    instruments.reduce(
-      (acc, i) => acc + i.lessons.filter((l) => l.completed).length,
-      0,
-    );
-  const progressPercent =
-    stats?.progressPercent ??
-    Math.round((completedLessons / totalLessons) * 100);
-  const totalXp =
-    stats?.totalXp ??
-    instruments.reduce(
-      (acc, i) =>
-        acc +
-        i.lessons.filter((l) => l.completed).reduce((s, l) => s + l.xp, 0),
-      0,
-    );
+  // Only use static fallback if stats is null OR if loading is complete but values are 0
+  const shouldUseFallback =
+    !stats || (stats && stats.totalLessons === 0 && !loading);
+
+  const totalLessons = shouldUseFallback
+    ? instruments.reduce((acc, i) => acc + i.lessons.length, 0)
+    : (stats?.totalLessons ?? 0);
+
+  const completedLessons = shouldUseFallback
+    ? instruments.reduce(
+        (acc, i) => acc + i.lessons.filter((l) => l.completed).length,
+        0,
+      )
+    : (stats?.completedLessons ?? 0);
+
+  const progressPercent = shouldUseFallback
+    ? Math.round((completedLessons / totalLessons) * 100)
+    : (stats?.progressPercent ?? 0);
+
+  const totalXp = shouldUseFallback
+    ? instruments.reduce(
+        (acc, i) =>
+          acc +
+          i.lessons.filter((l) => l.completed).reduce((s, l) => s + l.xp, 0),
+        0,
+      )
+    : (stats?.totalXp ?? 0);
+
   const currentStreak = stats?.currentStreak ?? 7;
   const userLevel = stats?.level ?? 3;
 
