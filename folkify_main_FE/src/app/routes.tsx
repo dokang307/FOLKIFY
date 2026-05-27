@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router";
+import { useParams } from "react-router";
 import { Root } from "./components/Root";
 import { Home } from "./components/Home";
 import { Learn } from "./components/Learn";
@@ -13,8 +14,21 @@ import { ForgotPassword } from "./components/ForgotPassword";
 import { Register } from "./components/Register";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
-import { AdminDashboard } from "./components/AdminDashboard";
 import { AdminUsers } from "./components/AdminUsers";
+import { ProtectedAdminRoute } from "../components/admin/ProtectedAdminRoute";
+import { AdminLayout } from "../components/admin/AdminLayout";
+import { DashboardHome } from "../components/admin/DashboardHome";
+import { LessonList } from "../components/admin/LessonList";
+import { LessonForm } from "../components/admin/LessonForm";
+import { AnalyticsDashboard } from "../components/admin/AnalyticsDashboard";
+import { ActivityLogList } from "../components/admin/ActivityLogList";
+
+// Wrapper component for LessonForm edit mode
+// Requirements: 8.3 - Navigation without full page reload
+function LessonFormEdit() {
+  const { lessonId } = useParams<{ lessonId: string }>();
+  return <LessonForm lessonId={lessonId} />;
+}
 
 export const router = createBrowserRouter([
   {
@@ -42,8 +56,26 @@ export const router = createBrowserRouter([
           { path: "profile", Component: Profile },
         ],
       },
-      // Admin routes (outside Root to have different layout)
-      { path: "/admin", Component: AdminDashboard },
+    ],
+  },
+  // Admin routes with admin-only protection
+  // Requirements: 8.3, 11.1
+  {
+    Component: ProtectedAdminRoute,
+    children: [
+      {
+        path: "/admin",
+        Component: AdminLayout,
+        children: [
+          { index: true, Component: DashboardHome },
+          { path: "lessons", Component: LessonList },
+          { path: "lessons/create", Component: LessonForm },
+          { path: "lessons/:lessonId/edit", Component: LessonFormEdit },
+          { path: "analytics", Component: AnalyticsDashboard },
+          { path: "activity-logs", Component: ActivityLogList },
+        ],
+      },
+      // Legacy routes for backward compatibility
       { path: "/admin/users", Component: AdminUsers },
     ],
   },

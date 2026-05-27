@@ -16,6 +16,7 @@ import premiumRoutes from './routes/premium.routes';
 import aiGradingRoutes from './routes/aiGrading.routes';
 import practiceSessionRoutes from './routes/practiceSession.routes';
 import adminRoutes from './routes/admin.routes';
+import adminLessonRoutes from './routes/adminLesson.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import healthRoutes from './routes/health.routes';
 import swaggerRoutes from './routes/swagger.routes';
@@ -93,6 +94,7 @@ export function createApp(): Application {
 
   // Admin routes (admin only)
   app.use('/api/admin', adminRoutes);
+  app.use('/api/admin/lessons', adminLessonRoutes);
   app.use('/api/admin/analytics', analyticsRoutes);
 
   // ============= ERROR HANDLING =============

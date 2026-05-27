@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { adminService, UserListItem } from "../../services/adminService";
-import { useNavigate } from "react-router";
-import { getCurrentUser } from "../auth";
+import { AdminLayout } from "../../components/admin/AdminLayout";
 
 export function AdminUsers() {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -16,13 +14,8 @@ export function AdminUsers() {
   });
 
   useEffect(() => {
-    const user = getCurrentUser();
-    if (!user || user.role !== "admin") {
-      navigate("/");
-      return;
-    }
     loadUsers();
-  }, [navigate, currentPage, filters]);
+  }, [currentPage, filters]);
 
   const loadUsers = async () => {
     try {
@@ -94,31 +87,17 @@ export function AdminUsers() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Quản lý người dùng
-              </h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Xem và quản lý tài khoản người dùng
-              </p>
-            </div>
-            <button
-              onClick={() => navigate("/admin")}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-            >
-              ← Quay lại
-            </button>
-          </div>
-        </div>
+    <AdminLayout>
+      {/* Page Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Quản lý người dùng</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Xem và quản lý tài khoản người dùng
+        </p>
       </div>
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div>
         <div className="bg-white rounded-lg shadow p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <input
@@ -168,7 +147,7 @@ export function AdminUsers() {
         {/* Users Table */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           </div>
         ) : (
           <>
@@ -290,6 +269,6 @@ export function AdminUsers() {
           </>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 }

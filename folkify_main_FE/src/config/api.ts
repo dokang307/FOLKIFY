@@ -70,6 +70,7 @@ class ApiClient {
           data.error || data.message || `HTTP ${response.status}`;
 
         // Handle 401 Unauthorized - token expired or invalid
+        // Requirements: 9.4, 11.4
         if (response.status === 401) {
           console.warn(
             "API Client: 401 Unauthorized - clearing auth data and redirecting to login",
@@ -89,11 +90,23 @@ class ApiClient {
           }
         }
 
+        // Handle 403 Forbidden - user does not have permission
+        // Requirement: 9.5
+        if (response.status === 403) {
+          throw new Error("You do not have permission to perform this action.");
+        }
+
         throw new Error(errorMessage);
       }
 
       return data;
     } catch (error) {
+      // Handle network errors
+      // Requirement: 9.3
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        throw new Error("Network error. Please check your connection.");
+      }
+
       if (error instanceof Error) {
         throw error;
       }

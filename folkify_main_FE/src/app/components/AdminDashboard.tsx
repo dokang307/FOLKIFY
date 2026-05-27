@@ -6,7 +6,7 @@ import {
   AIGradingStatistics,
 } from "../../services/adminService";
 import { useNavigate } from "react-router";
-import { getCurrentUser } from "../auth";
+import { AdminLayout } from "../../components/admin/AdminLayout";
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -18,15 +18,8 @@ export function AdminDashboard() {
   const [aiStats, setAIStats] = useState<AIGradingStatistics | null>(null);
 
   useEffect(() => {
-    // Check if user is admin
-    const user = getCurrentUser();
-    if (!user || user.role !== "admin") {
-      navigate("/");
-      return;
-    }
-
     loadStatistics();
-  }, [navigate]);
+  }, []);
 
   const loadStatistics = async () => {
     try {
@@ -48,41 +41,28 @@ export function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+          </div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Admin Dashboard
-              </h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Quản lý và thống kê hệ thống
-              </p>
-            </div>
-            <button
-              onClick={() => navigate("/")}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
-            >
-              Về trang chủ
-            </button>
-          </div>
-        </div>
+    <AdminLayout>
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Quản lý và thống kê hệ thống
+        </p>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div>
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <button
@@ -251,6 +231,6 @@ export function AdminDashboard() {
           </div>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }

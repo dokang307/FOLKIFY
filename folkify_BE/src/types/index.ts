@@ -1,2 +1,4 @@
 // Type definitions will be exported from here
-export {};
+
+// Admin Lesson Management Types
+export * from './adminLesson.types';

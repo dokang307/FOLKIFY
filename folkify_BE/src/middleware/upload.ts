@@ -109,3 +109,172 @@ export function validateFileSize(req: Request, _res: any, next: any): void {
 
   next();
 }
+
+/**
+ * Lesson file upload middleware
+ * Requirements: 3.1, 3.2, 3.3, 3.4, 3.6, 3.7, 3.8, 4.1, 4.2, 4.3, 4.4, 4.6, 4.7, 12.6
+ */
+
+// Allowed lesson video types
+const ALLOWED_LESSON_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/x-msvideo'];
+
+// Allowed sheet music types
+const ALLOWED_SHEET_MUSIC_TYPES = ['application/pdf', 'application/vnd.recordare.musicxml+xml'];
+
+// File size limits for lessons
+const MAX_LESSON_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
+const MAX_SHEET_MUSIC_SIZE = 20 * 1024 * 1024; // 20MB
+
+/**
+ * Configure multer storage for lesson videos
+ */
+const lessonVideoStorage = multer.diskStorage({
+  destination: (req: Request, _file, cb) => {
+    const lessonId = req.params.id;
+    if (!lessonId) {
+      return cb(new Error('Lesson ID not found in request'), '');
+    }
+
+    const uploadPath = path.join(process.cwd(), 'uploads', 'lessons', lessonId, 'videos');
+
+    // Create directory if it doesn't exist
+    fs.mkdirSync(uploadPath, { recursive: true });
+
+    cb(null, uploadPath);
+  },
+  filename: (_req, file, cb) => {
+    // Generate unique filename with UUID
+    const ext = path.extname(file.originalname);
+    const filename = `${uuidv4()}${ext}`;
+    cb(null, filename);
+  },
+});
+
+/**
+ * Configure multer storage for sheet music
+ */
+const sheetMusicStorage = multer.diskStorage({
+  destination: (req: Request, _file, cb) => {
+    const lessonId = req.params.id;
+    if (!lessonId) {
+      return cb(new Error('Lesson ID not found in request'), '');
+    }
+
+    const uploadPath = path.join(process.cwd(), 'uploads', 'lessons', lessonId, 'sheets');
+
+    // Create directory if it doesn't exist
+    fs.mkdirSync(uploadPath, { recursive: true });
+
+    cb(null, uploadPath);
+  },
+  filename: (_req, file, cb) => {
+    // Generate unique filename with UUID
+    const ext = path.extname(file.originalname);
+    const filename = `${uuidv4()}${ext}`;
+    cb(null, filename);
+  },
+});
+
+/**
+ * File filter for lesson videos
+ */
+const lessonVideoFilter = (
+  _req: Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+) => {
+  if (!ALLOWED_LESSON_VIDEO_TYPES.includes(file.mimetype)) {
+    return cb(
+      new BadRequestError(
+        'Invalid video file type. Allowed types: mp4, mov, avi',
+        'INVALID_FILE_TYPE'
+      )
+    );
+  }
+  cb(null, true);
+};
+
+/**
+ * File filter for sheet music
+ */
+const sheetMusicFilter = (
+  _req: Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+) => {
+  if (!ALLOWED_SHEET_MUSIC_TYPES.includes(file.mimetype)) {
+    return cb(
+      new BadRequestError(
+        'Invalid sheet music file type. Allowed types: pdf, musicxml',
+        'INVALID_FILE_TYPE'
+      )
+    );
+  }
+  cb(null, true);
+};
+
+/**
+ * Multer upload configuration for lesson videos
+ */
+export const uploadLessonVideo = multer({
+  storage: lessonVideoStorage,
+  fileFilter: lessonVideoFilter,
+  limits: {
+    fileSize: MAX_LESSON_VIDEO_SIZE,
+  },
+}).single('video');
+
+/**
+ * Multer upload configuration for sheet music
+ */
+export const uploadSheetMusic = multer({
+  storage: sheetMusicStorage,
+  fileFilter: sheetMusicFilter,
+  limits: {
+    fileSize: MAX_SHEET_MUSIC_SIZE,
+  },
+}).single('sheet');
+
+/**
+ * Middleware to validate lesson video file size
+ */
+export function validateLessonVideoSize(req: Request, _res: any, next: any): void {
+  if (!req.file) {
+    return next(new BadRequestError('No video file uploaded', 'NO_FILE'));
+  }
+
+  if (req.file.size > MAX_LESSON_VIDEO_SIZE) {
+    // Delete the uploaded file
+    fs.unlinkSync(req.file.path);
+    return next(
+      new BadRequestError(
+        `Video file too large. Maximum size: ${MAX_LESSON_VIDEO_SIZE / 1024 / 1024}MB`,
+        'FILE_TOO_LARGE'
+      )
+    );
+  }
+
+  next();
+}
+
+/**
+ * Middleware to validate sheet music file size
+ */
+export function validateSheetMusicSize(req: Request, _res: any, next: any): void {
+  if (!req.file) {
+    return next(new BadRequestError('No sheet music file uploaded', 'NO_FILE'));
+  }
+
+  if (req.file.size > MAX_SHEET_MUSIC_SIZE) {
+    // Delete the uploaded file
+    fs.unlinkSync(req.file.path);
+    return next(
+      new BadRequestError(
+        `Sheet music file too large. Maximum size: ${MAX_SHEET_MUSIC_SIZE / 1024 / 1024}MB`,
+        'FILE_TOO_LARGE'
+      )
+    );
+  }
+
+  next();
+}

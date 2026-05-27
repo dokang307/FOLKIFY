@@ -113,9 +113,21 @@ export function Home() {
   const [notifications, setNotifications] = useState(mockNotifications);
   const [recentLessons, setRecentLessons] = useState<any[]>([]);
   const [todayPracticeMinutes, setTodayPracticeMinutes] = useState(0);
+  const [accessError, setAccessError] = useState<string | null>(null);
   const currentUser = getCurrentUser();
   const userName = currentUser?.name ?? "Học viên";
   const { progress, stats, loading, error } = useUserProgress();
+
+  // Check for access error from admin route protection
+  useEffect(() => {
+    const errorMsg = sessionStorage.getItem("access_error");
+    if (errorMsg) {
+      setAccessError(errorMsg);
+      sessionStorage.removeItem("access_error");
+      // Auto-hide after 5 seconds
+      setTimeout(() => setAccessError(null), 5000);
+    }
+  }, []);
 
   // Fetch recent lessons and today's practice time
   useEffect(() => {
@@ -299,6 +311,14 @@ export function Home() {
 
   return (
     <div className="flex flex-col min-h-full">
+      {/* Access Error Message */}
+      {accessError && (
+        <div className="px-4 pt-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800 text-sm font-medium">{accessError}</p>
+          </div>
+        </div>
+      )}
       {showError && (
         <div className="px-4 pt-4">
           <ErrorMessage message={error} />
