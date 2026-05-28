@@ -20,13 +20,23 @@ export interface ActivityLogParams {
   endDate?: string; // ISO 8601 format
 }
 
+export interface ActivityLogResponse {
+  logs: ActivityLog[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export const adminActivityLogService = {
   /**
    * Get activity logs with pagination and filters
    */
   async getActivityLogs(
     params: ActivityLogParams = {},
-  ): Promise<ApiSuccessResponse<ActivityLog[]>> {
+  ): Promise<ApiSuccessResponse<ActivityLogResponse>> {
     const queryParams = new URLSearchParams();
 
     if (params.page) queryParams.append("page", params.page.toString());
@@ -42,6 +52,6 @@ export const adminActivityLogService = {
       ? `${ADMIN_API_ENDPOINTS.ACTIVITY_LOGS}?${queryString}`
       : ADMIN_API_ENDPOINTS.ACTIVITY_LOGS;
 
-    return api.get<ApiSuccessResponse<ActivityLog[]>>(endpoint);
+    return api.get<ApiSuccessResponse<ActivityLogResponse>>(endpoint);
   },
 };

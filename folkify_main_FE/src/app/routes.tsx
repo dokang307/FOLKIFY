@@ -68,6 +68,7 @@ export const router = createBrowserRouter([
         Component: AdminLayout,
         children: [
           { index: true, Component: DashboardHome },
+          { path: "users", Component: AdminUsers },
           { path: "lessons", Component: LessonList },
           { path: "lessons/create", Component: LessonForm },
           { path: "lessons/:lessonId/edit", Component: LessonFormEdit },
@@ -75,8 +76,6 @@ export const router = createBrowserRouter([
           { path: "activity-logs", Component: ActivityLogList },
         ],
       },
-      // Legacy routes for backward compatibility
-      { path: "/admin/users", Component: AdminUsers },
     ],
   },
 ]);

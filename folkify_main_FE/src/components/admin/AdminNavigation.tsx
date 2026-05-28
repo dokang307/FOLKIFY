@@ -20,6 +20,7 @@ interface AdminNavigationProps {
 
 const navItems: NavigationItem[] = [
   { path: "/admin", label: "Dashboard", exact: true },
+  { path: "/admin/users", label: "Users", exact: false },
   { path: "/admin/lessons", label: "Lessons", exact: false },
   { path: "/admin/analytics", label: "Analytics", exact: false },
   { path: "/admin/activity-logs", label: "Activity Logs", exact: false },

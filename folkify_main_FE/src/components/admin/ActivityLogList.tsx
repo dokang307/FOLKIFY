@@ -97,13 +97,16 @@ export function ActivityLogList() {
         endDate,
       });
 
-      setLogs(response.data);
+      // Backend returns { success: true, data: { logs: [...], pagination: {...} } }
+      // Extract logs array from nested structure
+      setLogs(response.data.logs);
 
-      if (response.pagination) {
-        setTotal(response.pagination.total);
+      // Extract pagination from nested structure
+      if (response.data.pagination) {
+        setTotal(response.data.pagination.total);
         setTotalPages(
-          response.pagination.totalPages ||
-            Math.ceil(response.pagination.total / DEFAULT_PAGE_SIZE),
+          response.data.pagination.totalPages ||
+            Math.ceil(response.data.pagination.total / DEFAULT_PAGE_SIZE),
         );
       }
     } catch (err: any) {

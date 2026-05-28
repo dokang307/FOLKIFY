@@ -1,14 +1,16 @@
 /**
  * DashboardHome Component
  *
- * Dashboard overview page displaying user, revenue, and AI grading statistics.
+ * Dashboard overview page displaying user, revenue, and AI grading statistics with quick actions.
  * Features auto-refresh every 60 seconds, manual refresh button, and last refresh timestamp.
  * Uses StatisticsCard components with Vietnamese labels matching backend responses.
+ * Includes quick action buttons for navigating to key admin sections.
  *
  * Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 9.1, 9.2, 14.1, 14.3, 14.4
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router";
 import { StatisticsCard } from "./StatisticsCard";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { adminAnalyticsService } from "../../services/adminAnalyticsService";
@@ -41,6 +43,7 @@ interface DashboardData {
 }
 
 export function DashboardHome() {
+  const navigate = useNavigate();
   const [data, setData] = useState<DashboardData>({
     userStats: null,
     revenueStats: null,
@@ -349,6 +352,78 @@ export function DashboardHome() {
           {refreshing ? "Đang làm mới..." : "Làm mới"}
         </button>
       </header>
+
+      {/* Quick Actions Section */}
+      <section
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+        aria-label="Quick actions"
+      >
+        <button
+          onClick={() => navigate("/admin/users")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              navigate("/admin/users");
+            }
+          }}
+          className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2D6A4F] text-left"
+          tabIndex={0}
+        >
+          <div className="text-emerald-600 text-2xl mb-2">👥</div>
+          <h3 className="font-semibold text-gray-900">Quản lý người dùng</h3>
+          <p className="text-sm text-gray-500 mt-1">Xem và quản lý tài khoản</p>
+        </button>
+
+        <button
+          onClick={() => navigate("/admin/lessons")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              navigate("/admin/lessons");
+            }
+          }}
+          className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2D6A4F] text-left"
+          tabIndex={0}
+        >
+          <div className="text-blue-600 text-2xl mb-2">📚</div>
+          <h3 className="font-semibold text-gray-900">Quản lý bài học</h3>
+          <p className="text-sm text-gray-500 mt-1">Tạo và chỉnh sửa bài học</p>
+        </button>
+
+        <button
+          onClick={() => navigate("/admin/analytics")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              navigate("/admin/analytics");
+            }
+          }}
+          className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2D6A4F] text-left"
+          tabIndex={0}
+        >
+          <div className="text-purple-600 text-2xl mb-2">📊</div>
+          <h3 className="font-semibold text-gray-900">Thống kê chi tiết</h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Báo cáo và phân tích dữ liệu
+          </p>
+        </button>
+
+        <button
+          onClick={() => navigate("/admin/activity-logs")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              navigate("/admin/activity-logs");
+            }
+          }}
+          className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2D6A4F] text-left"
+          tabIndex={0}
+        >
+          <div className="text-orange-600 text-2xl mb-2">📝</div>
+          <h3 className="font-semibold text-gray-900">Activity Logs</h3>
+          <p className="text-sm text-gray-500 mt-1">Xem lịch sử hoạt động</p>
+        </button>
+      </section>
 
       {/* Statistics Cards Grid */}
       <section

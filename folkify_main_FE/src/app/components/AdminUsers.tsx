@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { adminService, UserListItem } from "../../services/adminService";
-import { AdminLayout } from "../../components/admin/AdminLayout";
 
 export function AdminUsers() {
   const [loading, setLoading] = useState(true);
@@ -87,7 +86,7 @@ export function AdminUsers() {
   };
 
   return (
-    <AdminLayout>
+    <>
       {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Quản lý người dùng</h1>
@@ -269,6 +268,6 @@ export function AdminUsers() {
           </>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 }
